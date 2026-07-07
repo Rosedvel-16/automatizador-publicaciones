@@ -4,28 +4,37 @@ import { useEffect, useState } from "react";
 import { Check, Circle } from "lucide-react";
 import { LOADING_STEPS } from "@/lib/types";
 
+const ROTATION_MIN_MS = 8_000;
+const ROTATION_MAX_MS = 10_000;
+
 interface LoadingStepsProps {
   onComplete: () => void;
+  apiDone?: boolean;
 }
 
-export function LoadingSteps({ onComplete }: LoadingStepsProps) {
-  const [completedCount, setCompletedCount] = useState(0);
+export function LoadingSteps({ onComplete, apiDone = false }: LoadingStepsProps) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [allDone, setAllDone] = useState(false);
 
   useEffect(() => {
-    if (completedCount >= LOADING_STEPS.length) {
-      const timer = setTimeout(onComplete, 400);
-      return () => clearTimeout(timer);
+    if (apiDone) {
+      setAllDone(true);
+      onComplete();
     }
+  }, [apiDone, onComplete]);
 
-    const stepDuration = 1000 + Math.random() * 1000;
+  useEffect(() => {
+    if (allDone) return;
+
+    const duration =
+      ROTATION_MIN_MS + Math.random() * (ROTATION_MAX_MS - ROTATION_MIN_MS);
+
     const timer = setTimeout(() => {
-      setCompletedCount((prev) => prev + 1);
-      setActiveIndex((prev) => Math.min(prev + 1, LOADING_STEPS.length - 1));
-    }, stepDuration);
+      setActiveIndex((prev) => (prev + 1) % LOADING_STEPS.length);
+    }, duration);
 
     return () => clearTimeout(timer);
-  }, [completedCount, onComplete]);
+  }, [activeIndex, allDone]);
 
   return (
     <div className="flex flex-col items-center justify-center py-16 animate-fade-in">
@@ -39,10 +48,9 @@ export function LoadingSteps({ onComplete }: LoadingStepsProps) {
 
         <ul className="flex flex-col gap-4" role="list">
           {LOADING_STEPS.map((step, index) => {
-            const isCompleted = index < completedCount;
-            const isActive =
-              index === activeIndex && index >= completedCount - 1 && !isCompleted;
-            const isPending = index > activeIndex && !isCompleted;
+            const isCompleted = allDone;
+            const isActive = !allDone && index === activeIndex;
+            const isPending = !allDone && index !== activeIndex;
 
             return (
               <li
