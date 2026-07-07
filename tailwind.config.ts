@@ -29,6 +29,7 @@ const config: Config = {
       animation: {
         "fade-in": "fadeIn 0.4s ease-out forwards",
         "slide-up": "slideUp 0.4s ease-out forwards",
+        "modal-in": "modalIn 0.25s ease-out forwards",
       },
       keyframes: {
         fadeIn: {
@@ -38,6 +39,10 @@ const config: Config = {
         slideUp: {
           "0%": { opacity: "0", transform: "translateY(12px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        modalIn: {
+          "0%": { opacity: "0", transform: "scale(0.97) translateY(8px)" },
+          "100%": { opacity: "1", transform: "scale(1) translateY(0)" },
         },
       },
     },

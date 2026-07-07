@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { formatCurrency } from "@/lib/utils";
 
 interface BriefFormProps {
   onSubmit: (brief: BriefInput) => void;
@@ -139,11 +140,15 @@ export function BriefForm({ onSubmit, initialValues }: BriefFormProps) {
           min="1"
           step="0.01"
           placeholder="97.00"
-          prefix="$"
+          prefix="S/"
           value={precio}
           onChange={(e) => setPrecio(e.target.value)}
           error={errors.precio}
-          hint="Precio de venta en USD"
+          hint={
+            precio && !isNaN(parseFloat(precio)) && parseFloat(precio) > 0
+              ? `Precio de venta: ${formatCurrency(parseFloat(precio))}`
+              : "Precio de venta en soles (PEN)"
+          }
         />
 
         <Input

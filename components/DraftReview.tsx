@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import {
   AIDraft,
   CtaOption,
@@ -14,6 +14,8 @@ import { Textarea } from "@/components/ui/Textarea";
 
 interface DraftReviewProps {
   draft: AIDraft;
+  initialReview?: DraftReviewInput | null;
+  onReviewChange?: (review: DraftReviewInput) => void;
   onSubmit: (review: DraftReviewInput) => void;
   isSubmitting?: boolean;
 }
@@ -36,20 +38,59 @@ const CTA_OPTIONS: CtaOption[] = [
 
 export function DraftReview({
   draft,
+  initialReview,
+  onReviewChange,
   onSubmit,
   isSubmitting = false,
 }: DraftReviewProps) {
-  const [avatarCliente, setAvatarCliente] = useState(draft.avatar_cliente);
-  const [dolorPrincipal, setDolorPrincipal] = useState(draft.dolor_principal);
+  const [avatarCliente, setAvatarCliente] = useState(
+    initialReview?.avatar_cliente ?? draft.avatar_cliente
+  );
+  const [dolorPrincipal, setDolorPrincipal] = useState(
+    initialReview?.dolor_principal ?? draft.dolor_principal
+  );
   const [transformacion, setTransformacion] = useState(
-    draft.transformacion_prometida
+    initialReview?.transformacion_prometida ?? draft.transformacion_prometida
   );
-  const [objeciones, setObjeciones] = useState(draft.objeciones_comunes);
-  const [temaBusqueda, setTemaBusqueda] = useState(draft.tema_busqueda);
+  const [objeciones, setObjeciones] = useState(
+    initialReview?.objeciones_comunes ?? draft.objeciones_comunes
+  );
+  const [temaBusqueda, setTemaBusqueda] = useState(
+    initialReview?.tema_busqueda ?? draft.tema_busqueda
+  );
   const [estiloVisual, setEstiloVisual] = useState<VisualStyle>(
-    "Profesional-corporativo"
+    initialReview?.estilo_visual ?? "Profesional-corporativo"
   );
-  const [ctaPreferido, setCtaPreferido] = useState<CtaOption>("Que decida la IA");
+  const [ctaPreferido, setCtaPreferido] = useState<CtaOption>(
+    initialReview?.cta_preferido ?? "Que decida la IA"
+  );
+
+  useEffect(() => {
+    if (!onReviewChange) return;
+
+    const timer = window.setTimeout(() => {
+      onReviewChange({
+        avatar_cliente: avatarCliente,
+        dolor_principal: dolorPrincipal,
+        transformacion_prometida: transformacion,
+        objeciones_comunes: objeciones,
+        tema_busqueda: temaBusqueda,
+        estilo_visual: estiloVisual,
+        cta_preferido: ctaPreferido,
+      });
+    }, 500);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    avatarCliente,
+    dolorPrincipal,
+    transformacion,
+    objeciones,
+    temaBusqueda,
+    estiloVisual,
+    ctaPreferido,
+    onReviewChange,
+  ]);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();

@@ -13,6 +13,7 @@ import {
   BriefInput,
   DraftReviewInput,
 } from "@/lib/types";
+import { useSessionPersistence } from "@/hooks/useSessionPersistence";
 import { ApiErrorState } from "@/components/ApiErrorState";
 import { BriefForm } from "@/components/BriefForm";
 import { LoadingSteps } from "@/components/LoadingSteps";
@@ -34,11 +35,23 @@ function getErrorMessage(error: unknown): string {
 }
 
 export default function HomePage() {
+  const {
+    isHydrated,
+    hydrateFromStorage,
+    saveSession,
+    clearSession,
+    restoreNotice,
+    setRestoreNotice,
+  } = useSessionPersistence();
+
   const [step, setStep] = useState<AppStep>("form");
   const [brief, setBrief] = useState<BriefInput | null>(null);
   const [draft, setDraft] = useState<AIDraft | null>(null);
   const [draftReview, setDraftReview] = useState<DraftReviewInput | null>(null);
   const [variants, setVariants] = useState<AdVariant[]>([]);
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
+    null
+  );
   const [isGeneratingAds, setIsGeneratingAds] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [isInvestigating, setIsInvestigating] = useState(false);
@@ -47,10 +60,67 @@ export default function HomePage() {
   const [apiError, setApiError] = useState<ApiError | null>(null);
 
   useEffect(() => {
+    const { snapshot } = hydrateFromStorage();
+    if (!snapshot || snapshot.currentStep === "form") {
+      if (snapshot?.briefInput) {
+        setBrief(snapshot.briefInput);
+      }
+      return;
+    }
+
+    setBrief(snapshot.briefInput);
+    setDraft(snapshot.aiDraft);
+    setDraftReview(snapshot.draftReview);
+    setVariants(snapshot.adVariants ?? []);
+    setSelectedVariantId(snapshot.selectedVariantId);
+    setStep(snapshot.currentStep);
+    setLoadingStepsDone(true);
+    setApiDone(Boolean(snapshot.aiDraft));
+  }, [hydrateFromStorage]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    saveSession({
+      currentStep: step,
+      briefInput: brief,
+      aiDraft: draft,
+      draftReview,
+      adVariants: variants.length > 0 ? variants : null,
+      selectedVariantId,
+    });
+  }, [
+    isHydrated,
+    step,
+    brief,
+    draft,
+    draftReview,
+    variants,
+    selectedVariantId,
+    saveSession,
+  ]);
+
+  useEffect(() => {
     if (step === "loading" && loadingStepsDone && apiDone && draft) {
       setStep("draft");
     }
   }, [step, loadingStepsDone, apiDone, draft]);
+
+  const handleStartNewCampaign = useCallback(() => {
+    clearSession();
+    setStep("form");
+    setBrief(null);
+    setDraft(null);
+    setDraftReview(null);
+    setVariants([]);
+    setSelectedVariantId(null);
+    setApiError(null);
+    setLoadingStepsDone(false);
+    setApiDone(false);
+    setIsGeneratingAds(false);
+    setIsRegenerating(false);
+    setIsInvestigating(false);
+  }, [clearSession]);
 
   const runInvestigation = useCallback(async (input: BriefInput) => {
     setIsInvestigating(true);
@@ -76,6 +146,9 @@ export default function HomePage() {
   const handleBriefSubmit = useCallback(
     async (input: BriefInput) => {
       setBrief(input);
+      setDraftReview(null);
+      setVariants([]);
+      setSelectedVariantId(null);
       setStep("loading");
       await runInvestigation(input);
     },
@@ -95,6 +168,10 @@ export default function HomePage() {
 
   const handleLoadingComplete = useCallback(() => {
     setLoadingStepsDone(true);
+  }, []);
+
+  const handleDraftReviewChange = useCallback((review: DraftReviewInput) => {
+    setDraftReview(review);
   }, []);
 
   const runGenerateAds = useCallback(
@@ -146,6 +223,7 @@ export default function HomePage() {
     try {
       const result = await regenerateAdVariants({ ...brief, ...draftReview });
       setVariants(result);
+      setSelectedVariantId(null);
     } catch (error) {
       setApiError({
         message: getErrorMessage(error),
@@ -169,6 +247,10 @@ export default function HomePage() {
     setStep("draft");
   }, []);
 
+  const handleSelectedVariantChange = useCallback((id: string) => {
+    setSelectedVariantId(id);
+  }, []);
+
   const showInvestigationError =
     apiError?.context === "investigation" &&
     (step === "loading" || isInvestigating);
@@ -179,13 +261,23 @@ export default function HomePage() {
   const showRegenerationError =
     apiError?.context === "regeneration" && step === "gallery";
 
+  const showStartNewCampaign = step !== "form";
+
+  if (!isHydrated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-brand-black">
+        <p className="text-sm text-neutral-500">Cargando sesión...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-neutral-800">
-        <div className="max-w-4xl mx-auto px-6 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-2 h-2 bg-brand-yellow" aria-hidden />
-            <div>
+        <div className="max-w-4xl mx-auto px-6 py-5 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-2 h-2 bg-brand-yellow shrink-0" aria-hidden />
+            <div className="min-w-0">
               <h1 className="text-base font-bold tracking-tight text-brand-white">
                 Lernymart Ads Engine
               </h1>
@@ -195,11 +287,38 @@ export default function HomePage() {
             </div>
           </div>
 
-          <StepIndicator current={step} />
+          <div className="flex items-center gap-3 shrink-0">
+            {showStartNewCampaign && (
+              <button
+                type="button"
+                onClick={handleStartNewCampaign}
+                className="hidden sm:inline text-xs text-neutral-500 underline underline-offset-2 transition-colors hover:text-brand-white"
+              >
+                Empezar nueva campaña
+              </button>
+            )}
+            <StepIndicator current={step} />
+          </div>
         </div>
       </header>
 
       <main className="flex-1 max-w-4xl mx-auto w-full px-6 py-10">
+        {restoreNotice && (
+          <div
+            className="mb-8 flex items-start justify-between gap-4 border border-brand-yellow/30 bg-brand-yellow/5 px-4 py-3"
+            role="status"
+          >
+            <p className="text-sm text-neutral-300">{restoreNotice}</p>
+            <button
+              type="button"
+              onClick={() => setRestoreNotice(null)}
+              className="shrink-0 text-xs text-neutral-500 transition-colors hover:text-brand-white"
+            >
+              Cerrar
+            </button>
+          </div>
+        )}
+
         {step === "form" && (
           <section>
             <div className="mb-8">
@@ -211,7 +330,10 @@ export default function HomePage() {
                 generará un borrador de estrategia publicitaria.
               </p>
             </div>
-            <BriefForm onSubmit={handleBriefSubmit} initialValues={brief ?? undefined} />
+            <BriefForm
+              onSubmit={handleBriefSubmit}
+              initialValues={brief ?? undefined}
+            />
           </section>
         )}
 
@@ -243,6 +365,8 @@ export default function HomePage() {
             )}
             <DraftReview
               draft={draft}
+              initialReview={draftReview}
+              onReviewChange={handleDraftReviewChange}
               onSubmit={handleDraftSubmit}
               isSubmitting={isGeneratingAds}
             />
@@ -264,8 +388,11 @@ export default function HomePage() {
             <VariantGallery
               variants={variants}
               format={brief.formato_anuncio}
+              selectedVariantId={selectedVariantId}
+              onSelectedVariantChange={handleSelectedVariantChange}
               onRegenerate={handleRegenerate}
               isRegenerating={isRegenerating}
+              onStartNewCampaign={handleStartNewCampaign}
             />
           </>
         )}
@@ -274,8 +401,7 @@ export default function HomePage() {
       <footer className="border-t border-neutral-800 mt-auto">
         <div className="max-w-4xl mx-auto px-6 py-4">
           <p className="text-xs text-neutral-600">
-            Lernymart Ads Engine — Simulación de flujo. Backend IA pendiente de
-            integración.
+            Lernymart Ads Engine — Conectado a n8n · PoC v1
           </p>
         </div>
       </footer>
