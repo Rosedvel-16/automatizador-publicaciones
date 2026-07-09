@@ -239,4 +239,78 @@ export async function selectVariant(
   return validateSelectVariantResponse(raw);
 }
 
+const TIMEOUT_PUBLISH_META_MS = 60_000;
+
+const PUBLISH_META_TIMEOUT_MESSAGE =
+  "La publicación en Meta tardó demasiado. Verifica en Meta Ads Manager si se creó parcialmente.";
+
+export interface PublishToMetaResponse {
+  success: boolean;
+  message: string;
+}
+
+function validatePublishToMetaResponse(data: unknown): PublishToMetaResponse {
+  if (!data || typeof data !== "object") {
+    throw new Error(
+      "La respuesta del servidor no tiene el formato esperado al publicar en Meta."
+    );
+  }
+
+  const record = data as Record<string, unknown>;
+
+  if (typeof record.success !== "boolean" || !isNonEmptyString(record.message)) {
+    throw new Error(
+      "La respuesta del servidor no tiene el formato esperado al publicar en Meta."
+    );
+  }
+
+  return {
+    success: record.success,
+    message: record.message,
+  };
+}
+
+export async function publishToMeta(
+  campanaId: string,
+  varianteId: string
+): Promise<PublishToMetaResponse> {
+  const url = buildWebhookUrl("/publicar-en-meta");
+  const payload = { campana_id: campanaId, variante_id: varianteId };
+  debugLog("publishToMeta → payload", payload);
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    TIMEOUT_PUBLISH_META_MS
+  );
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      throw new Error(`Error al publicar en Meta: ${res.status}`);
+    }
+
+    const raw = await res.json();
+    debugLog("publishToMeta ← response", raw);
+
+    return validatePublishToMetaResponse(raw);
+  } catch (error) {
+    if (
+      (error instanceof DOMException && error.name === "AbortError") ||
+      (error instanceof Error && error.name === "AbortError")
+    ) {
+      throw new Error(PUBLISH_META_TIMEOUT_MESSAGE);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 export type { DraftReviewInput, GenerateVariantsRequest };

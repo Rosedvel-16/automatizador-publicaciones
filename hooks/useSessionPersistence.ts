@@ -18,6 +18,8 @@ export interface AdsSessionSnapshot {
   draftReview: DraftReviewInput | null;
   adVariants: AdVariant[] | null;
   selectedVariantId: string | null;
+  variantConfirmed?: boolean;
+  metaPublished?: boolean;
 }
 
 export interface RestoredSession {
