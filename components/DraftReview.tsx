@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import {
   AIDraft,
   CtaOption,
@@ -65,36 +65,11 @@ export function DraftReview({
     initialReview?.cta_preferido ?? "Que decida la IA"
   );
 
-  useEffect(() => {
-    if (!onReviewChange) return;
+  const campanaId = initialReview?.campana_id ?? draft.campana_id;
 
-    const timer = window.setTimeout(() => {
-      onReviewChange({
-        avatar_cliente: avatarCliente,
-        dolor_principal: dolorPrincipal,
-        transformacion_prometida: transformacion,
-        objeciones_comunes: objeciones,
-        tema_busqueda: temaBusqueda,
-        estilo_visual: estiloVisual,
-        cta_preferido: ctaPreferido,
-      });
-    }, 500);
-
-    return () => window.clearTimeout(timer);
-  }, [
-    avatarCliente,
-    dolorPrincipal,
-    transformacion,
-    objeciones,
-    temaBusqueda,
-    estiloVisual,
-    ctaPreferido,
-    onReviewChange,
-  ]);
-
-  function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    onSubmit({
+  const buildReviewInput = useCallback(
+    (): DraftReviewInput => ({
+      campana_id: campanaId,
       avatar_cliente: avatarCliente,
       dolor_principal: dolorPrincipal,
       transformacion_prometida: transformacion,
@@ -102,7 +77,32 @@ export function DraftReview({
       tema_busqueda: temaBusqueda,
       estilo_visual: estiloVisual,
       cta_preferido: ctaPreferido,
-    });
+    }),
+    [
+      campanaId,
+      avatarCliente,
+      dolorPrincipal,
+      transformacion,
+      objeciones,
+      temaBusqueda,
+      estiloVisual,
+      ctaPreferido,
+    ]
+  );
+
+  useEffect(() => {
+    if (!onReviewChange) return;
+
+    const timer = window.setTimeout(() => {
+      onReviewChange(buildReviewInput());
+    }, 500);
+
+    return () => window.clearTimeout(timer);
+  }, [buildReviewInput, onReviewChange]);
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    onSubmit(buildReviewInput());
   }
 
   return (

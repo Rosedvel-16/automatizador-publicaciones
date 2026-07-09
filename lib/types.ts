@@ -36,6 +36,7 @@ export interface BriefInput {
 }
 
 export interface AIDraft {
+  campana_id: string;
   avatar_cliente: string;
   dolor_principal: string;
   transformacion_prometida: string;

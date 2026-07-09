@@ -13,6 +13,7 @@ const TIMEOUT_MESSAGE =
   "El servidor tardó demasiado en responder. Intenta de nuevo.";
 
 const AI_DRAFT_KEYS: (keyof AIDraft)[] = [
+  "campana_id",
   "avatar_cliente",
   "dolor_principal",
   "transformacion_prometida",
@@ -65,6 +66,7 @@ function validateAIDraft(data: unknown): AIDraft {
   }
 
   return {
+    campana_id: record.campana_id as string,
     avatar_cliente: record.avatar_cliente as string,
     dolor_principal: record.dolor_principal as string,
     transformacion_prometida: record.transformacion_prometida as string,
