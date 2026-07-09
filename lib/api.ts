@@ -189,4 +189,54 @@ export async function regenerateAdVariants(
   return generateAdVariants(request);
 }
 
+export interface SelectVariantResponse {
+  success: boolean;
+  message: string;
+}
+
+function validateSelectVariantResponse(data: unknown): SelectVariantResponse {
+  if (!data || typeof data !== "object") {
+    throw new Error(
+      "La respuesta del servidor no tiene el formato esperado al seleccionar la variante."
+    );
+  }
+
+  const record = data as Record<string, unknown>;
+
+  if (typeof record.success !== "boolean" || !isNonEmptyString(record.message)) {
+    throw new Error(
+      "La respuesta del servidor no tiene el formato esperado al seleccionar la variante."
+    );
+  }
+
+  return {
+    success: record.success,
+    message: record.message,
+  };
+}
+
+export async function selectVariant(
+  varianteId: string,
+  campanaId: string
+): Promise<SelectVariantResponse> {
+  const url = buildWebhookUrl("/seleccionar-variante");
+  const payload = { variante_id: varianteId, campana_id: campanaId };
+  debugLog("selectVariant → payload", payload);
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Error al seleccionar la variante: ${res.status}`);
+  }
+
+  const raw = await res.json();
+  debugLog("selectVariant ← response", raw);
+
+  return validateSelectVariantResponse(raw);
+}
+
 export type { DraftReviewInput, GenerateVariantsRequest };

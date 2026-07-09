@@ -388,6 +388,7 @@ export default function HomePage() {
             <VariantGallery
               variants={variants}
               format={brief.formato_anuncio}
+              campanaId={draftReview?.campana_id ?? draft?.campana_id ?? null}
               selectedVariantId={selectedVariantId}
               onSelectedVariantChange={handleSelectedVariantChange}
               onRegenerate={handleRegenerate}
