@@ -405,7 +405,7 @@ function validateCampanas(data: unknown): Campana[] {
 }
 
 export async function listarCampanas(): Promise<Campana[]> {
-  const url = buildWebhookUrl("/webhook/listar-campanas");
+  const url = buildWebhookUrl("/listar-campanas");
   debugLog("listarCampanas → request", { method: "GET" });
 
   const res = await fetch(url, {
