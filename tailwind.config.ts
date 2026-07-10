@@ -10,17 +10,21 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          black: "#0A0A0A",
-          yellow: "#FFC700",
-          white: "#FFFFFF",
+          black: "var(--color-surface)",
+          white: "var(--color-foreground)",
+          ink: "var(--color-ink)",
+          yellow: "var(--color-brand-yellow)",
+          "yellow-soft": "var(--color-brand-yellow-soft)",
+          "yellow-btn": "var(--color-brand-yellow-btn)",
         },
         neutral: {
-          400: "#A3A3A3",
-          500: "#737373",
-          600: "#525252",
-          700: "#404040",
-          800: "#262626",
-          900: "#171717",
+          400: "var(--color-neutral-400)",
+          500: "var(--color-neutral-500)",
+          600: "var(--color-neutral-600)",
+          700: "var(--color-neutral-700)",
+          800: "var(--color-neutral-800)",
+          900: "var(--color-neutral-900)",
+          950: "var(--color-neutral-950)",
         },
       },
       fontFamily: {

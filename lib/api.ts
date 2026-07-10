@@ -2,6 +2,7 @@ import {
   AdVariant,
   AIDraft,
   BriefInput,
+  Campana,
   DraftReviewInput,
   GenerateVariantsRequest,
 } from "./types";
@@ -292,14 +293,22 @@ export async function publishToMeta(
       signal: controller.signal,
     });
 
+    const data: unknown = await res.json().catch(() => null);
+    debugLog("publishToMeta ← response", data);
+
     if (!res.ok) {
-      throw new Error(`Error al publicar en Meta: ${res.status}`);
+      const record =
+        data && typeof data === "object"
+          ? (data as Record<string, unknown>)
+          : null;
+      const specificError =
+        typeof record?.error === "string" && record.error.trim()
+          ? record.error
+          : null;
+      throw new Error(specificError || `Error al publicar en Meta: ${res.status}`);
     }
 
-    const raw = await res.json();
-    debugLog("publishToMeta ← response", raw);
-
-    return validatePublishToMetaResponse(raw);
+    return validatePublishToMetaResponse(data);
   } catch (error) {
     if (
       (error instanceof DOMException && error.name === "AbortError") ||
@@ -311,6 +320,106 @@ export async function publishToMeta(
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+const CAMPANA_KEYS: (keyof Campana)[] = [
+  "id",
+  "avatar_cliente",
+  "dolor_principal",
+  "transformacion_prometida",
+  "objeciones_comunes",
+  "tema_busqueda",
+  "status",
+  "created_at",
+  "meta_campaign_id",
+  "meta_adset_id",
+  "meta_ad_id",
+  "published_at",
+];
+
+function validateCampanas(data: unknown): Campana[] {
+  if (!Array.isArray(data)) {
+    throw new Error(
+      "La respuesta del servidor no tiene el formato esperado para las campañas."
+    );
+  }
+
+  return data.map((item, index) => {
+    if (!item || typeof item !== "object") {
+      throw new Error(`La campaña ${index + 1} no tiene un formato válido.`);
+    }
+
+    const record = item as Record<string, unknown>;
+
+    for (const key of CAMPANA_KEYS) {
+      if (!(key in record)) {
+        throw new Error(
+          `La campaña ${index + 1} no incluye el campo requerido: ${key}.`
+        );
+      }
+    }
+
+    const nullableStringKeys = [
+      "meta_campaign_id",
+      "meta_adset_id",
+      "meta_ad_id",
+      "published_at",
+    ] as const;
+
+    for (const key of nullableStringKeys) {
+      const value = record[key];
+      if (value !== null && typeof value !== "string") {
+        throw new Error(
+          `La campaña ${index + 1} tiene un valor inválido en ${key}.`
+        );
+      }
+    }
+
+    const requiredStringKeys = CAMPANA_KEYS.filter(
+      (key) => !nullableStringKeys.includes(key as (typeof nullableStringKeys)[number])
+    );
+
+    for (const key of requiredStringKeys) {
+      if (!isNonEmptyString(record[key])) {
+        throw new Error(
+          `La campaña ${index + 1} no incluye el campo requerido: ${key}.`
+        );
+      }
+    }
+
+    return {
+      id: record.id as string,
+      avatar_cliente: record.avatar_cliente as string,
+      dolor_principal: record.dolor_principal as string,
+      transformacion_prometida: record.transformacion_prometida as string,
+      objeciones_comunes: record.objeciones_comunes as string,
+      tema_busqueda: record.tema_busqueda as string,
+      status: record.status as string,
+      created_at: record.created_at as string,
+      meta_campaign_id: record.meta_campaign_id as string | null,
+      meta_adset_id: record.meta_adset_id as string | null,
+      meta_ad_id: record.meta_ad_id as string | null,
+      published_at: record.published_at as string | null,
+    };
+  });
+}
+
+export async function listarCampanas(): Promise<Campana[]> {
+  const url = buildWebhookUrl("/webhook/listar-campanas");
+  debugLog("listarCampanas → request", { method: "GET" });
+
+  const res = await fetch(url, {
+    method: "GET",
+  });
+
+  if (!res.ok) {
+    throw new Error("No se pudieron cargar las campañas");
+  }
+
+  const raw = await res.json();
+  debugLog("listarCampanas ← response", raw);
+
+  return validateCampanas(raw);
 }
 
 export type { DraftReviewInput, GenerateVariantsRequest };

@@ -14,13 +14,25 @@ export const metadata: Metadata = {
     "Generador de campañas publicitarias para Meta Ads — copy e imágenes con IA",
 };
 
+const themeInitScript = `
+  try {
+    if (localStorage.getItem('lernymart-theme') === 'light') {
+      document.documentElement.classList.add('light');
+      document.documentElement.style.colorScheme = 'light';
+    }
+  } catch {}
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className={`${inter.variable} font-sans min-h-screen`}>
         {children}
       </body>

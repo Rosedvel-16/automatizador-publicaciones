@@ -59,6 +59,21 @@ export interface AdVariant {
 
 export interface GenerateVariantsRequest extends BriefInput, DraftReviewInput {}
 
+export interface Campana {
+  id: string;
+  avatar_cliente: string;
+  dolor_principal: string;
+  transformacion_prometida: string;
+  objeciones_comunes: string;
+  tema_busqueda: string;
+  status: string;
+  created_at: string;
+  meta_campaign_id: string | null;
+  meta_adset_id: string | null;
+  meta_ad_id: string | null;
+  published_at: string | null;
+}
+
 export const AD_FORMAT_LABELS: Record<AdFormat, string> = {
   "1:1": "Feed cuadrado (1:1)",
   "9:16": "Story vertical (9:16)",

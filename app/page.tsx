@@ -19,6 +19,7 @@ import { BriefForm } from "@/components/BriefForm";
 import { LoadingSteps } from "@/components/LoadingSteps";
 import { DraftReview } from "@/components/DraftReview";
 import { VariantGallery } from "@/components/VariantGallery";
+import { AppHeader } from "@/components/AppHeader";
 
 type ApiErrorContext = "investigation" | "generation" | "regeneration";
 
@@ -289,21 +290,9 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b border-neutral-800">
-        <div className="max-w-4xl mx-auto px-6 py-5 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-2 h-2 bg-brand-yellow shrink-0" aria-hidden />
-            <div className="min-w-0">
-              <h1 className="text-base font-bold tracking-tight text-brand-white">
-                Lernymart Ads Engine
-              </h1>
-              <p className="text-xs text-neutral-500">
-                Generador de campañas Meta Ads
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0">
+      <AppHeader
+        rightContent={
+          <>
             {showStartNewCampaign && (
               <button
                 type="button"
@@ -314,9 +303,9 @@ export default function HomePage() {
               </button>
             )}
             <StepIndicator current={step} />
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       <main className="flex-1 max-w-4xl mx-auto w-full px-6 py-10">
         {restoreNotice && (

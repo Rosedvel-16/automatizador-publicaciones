@@ -32,6 +32,11 @@ function getErrorMessage(error: unknown): string {
   return "Ocurrió un error inesperado. Intenta de nuevo.";
 }
 
+function isPaymentConfigError(message: string): boolean {
+  const lower = message.toLowerCase();
+  return lower.includes("método de pago") || lower.includes("pago");
+}
+
 export function VariantGallery({
   variants,
   format,
@@ -87,10 +92,7 @@ export function VariantGallery({
       onMetaPublished();
       setShowPublishToast(true);
     } catch (error) {
-      const detail = getErrorMessage(error);
-      setPublishError(
-        `No se pudo publicar en Meta Ads. ${detail}. Puedes reintentar o revisar manualmente en Meta Ads Manager.`
-      );
+      setPublishError(getErrorMessage(error));
     } finally {
       setIsPublishing(false);
     }
@@ -159,6 +161,12 @@ export function VariantGallery({
           onBack={() => setPublishError(null)}
           backLabel="Cerrar"
           isRetrying={isPublishing}
+          tone={isPaymentConfigError(publishError) ? "warning" : "error"}
+          title={
+            isPaymentConfigError(publishError)
+              ? "Configuración requerida en Meta Ads"
+              : "No se pudo publicar en Meta Ads"
+          }
         />
       )}
 
