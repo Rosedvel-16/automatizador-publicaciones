@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type KeyboardEvent } from "react";
 import Link from "next/link";
-import { Check, Loader2 } from "lucide-react";
+import { Check, ChevronDown, Loader2 } from "lucide-react";
 import { listarCampanas } from "@/lib/api";
 import { Campana } from "@/lib/types";
 import { formatCampanaDate } from "@/lib/utils";
@@ -62,27 +62,71 @@ function CampaignCardSkeleton() {
 }
 
 function CampaignCard({ campana }: { campana: Campana }) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const status = getStatusConfig(campana.status);
   const showMetaPublished =
     campana.status === "publicada" && Boolean(campana.meta_ad_id);
 
+  function toggleExpanded() {
+    setIsExpanded((prev) => !prev);
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLElement>) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      toggleExpanded();
+    }
+  }
+
   return (
-    <article className="flex flex-col gap-4 border border-neutral-800 bg-neutral-900/40 p-5 transition-colors hover:border-neutral-600 animate-fade-in">
-      <div className="flex items-start justify-between gap-3">
-        <h2 className="text-sm font-bold text-brand-white leading-snug">
-          {campana.tema_busqueda}
-        </h2>
-        <span
+    <article
+      role="button"
+      tabIndex={0}
+      aria-expanded={isExpanded}
+      onClick={toggleExpanded}
+      onKeyDown={handleKeyDown}
+      className={[
+        "flex flex-col gap-4 border border-neutral-800 bg-neutral-900/40 p-5",
+        "cursor-pointer transition-all duration-200 animate-fade-in",
+        "hover:border-neutral-600 hover:bg-neutral-900/70",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow",
+      ].join(" ")}
+    >
+      <div className="flex items-start gap-3">
+        <h2
           className={[
-            "shrink-0 inline-flex px-2 py-1 text-[10px] font-semibold uppercase tracking-wider border",
-            status.className,
+            "flex-1 min-w-0 text-sm font-semibold text-brand-white leading-snug",
+            !isExpanded && "line-clamp-2",
           ].join(" ")}
         >
-          {status.label}
-        </span>
+          {campana.tema_busqueda}
+        </h2>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <span
+            className={[
+              "inline-flex px-2 py-1 text-[10px] font-semibold uppercase tracking-wider border",
+              status.className,
+            ].join(" ")}
+          >
+            {status.label}
+          </span>
+          <ChevronDown
+            className={[
+              "w-4 h-4 text-neutral-500 transition-transform duration-200",
+              isExpanded ? "rotate-180" : "",
+            ].join(" ")}
+            aria-hidden
+          />
+        </div>
       </div>
 
-      <p className="text-sm text-neutral-400 leading-relaxed line-clamp-2">
+      <p
+        className={[
+          "text-sm text-neutral-400 leading-relaxed",
+          !isExpanded && "line-clamp-2",
+        ].join(" ")}
+      >
         {campana.dolor_principal}
       </p>
 
