@@ -59,6 +59,14 @@ export interface AdVariant {
 
 export interface GenerateVariantsRequest extends BriefInput, DraftReviewInput {}
 
+export interface PublicarCampanaInput {
+  campana_id: string;
+  variante_ids: string[];
+}
+
+export const MIN_SELECTED_VARIANTS = 2;
+export const MAX_SELECTED_VARIANTS = 4;
+
 export interface Campana {
   id: string;
   avatar_cliente: string;

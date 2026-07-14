@@ -1,6 +1,6 @@
 "use client";
 
-import { Maximize2 } from "lucide-react";
+import { Check, Maximize2 } from "lucide-react";
 import { AdFormat, AdVariant } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 
@@ -8,6 +8,7 @@ interface VariantCardProps {
   variant: AdVariant;
   format: AdFormat;
   isSelected: boolean;
+  selectionDisabled?: boolean;
   onSelect: (id: string) => void;
   onOpenDetail: () => void;
 }
@@ -22,6 +23,7 @@ export function VariantCard({
   variant,
   format,
   isSelected,
+  selectionDisabled = false,
   onSelect,
   onOpenDetail,
 }: VariantCardProps) {
@@ -55,6 +57,18 @@ export function VariantCard({
           className="absolute inset-0 z-[1] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-yellow"
           aria-label={`Ver detalle de ${variant.titulo}`}
         />
+
+        <div
+          className={[
+            "absolute top-2 left-2 z-10 flex h-7 w-7 items-center justify-center border transition-colors",
+            isSelected
+              ? "border-brand-yellow bg-brand-yellow text-brand-black"
+              : "border-neutral-600 bg-brand-black/70 text-transparent",
+          ].join(" ")}
+          aria-hidden
+        >
+          <Check className="h-4 w-4" strokeWidth={3} />
+        </div>
 
         <button
           type="button"
@@ -90,9 +104,11 @@ export function VariantCard({
             type="button"
             variant={isSelected ? "primary" : "secondary"}
             fullWidth
+            disabled={!isSelected && selectionDisabled}
             onClick={() => onSelect(variant.id)}
+            aria-pressed={isSelected}
           >
-            {isSelected ? "Variante seleccionada" : "Seleccionar esta variante"}
+            {isSelected ? "Seleccionada" : "Seleccionar"}
           </Button>
         </div>
       </div>

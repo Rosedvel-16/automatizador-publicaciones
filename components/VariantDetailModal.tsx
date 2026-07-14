@@ -137,8 +137,9 @@ export function VariantDetailModal({
               variant={isSelected ? "primary" : "secondary"}
               fullWidth
               onClick={handleSelect}
+              aria-pressed={isSelected}
             >
-              {isSelected ? "Variante seleccionada" : "Seleccionar esta variante"}
+              {isSelected ? "Quitar de la selección" : "Añadir a la selección"}
             </Button>
           </div>
         </div>

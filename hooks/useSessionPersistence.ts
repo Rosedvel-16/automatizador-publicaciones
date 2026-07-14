@@ -17,9 +17,30 @@ export interface AdsSessionSnapshot {
   aiDraft: AIDraft | null;
   draftReview: DraftReviewInput | null;
   adVariants: AdVariant[] | null;
-  selectedVariantId: string | null;
+  selectedVariantIds: string[];
+  /** @deprecated Prefer selectedVariantIds — kept for restoring old sessions */
+  selectedVariantId?: string | null;
   variantConfirmed?: boolean;
   metaPublished?: boolean;
+}
+
+function normalizeSelectedVariantIds(
+  snapshot: Pick<AdsSessionSnapshot, "selectedVariantIds" | "selectedVariantId">
+): string[] {
+  if (Array.isArray(snapshot.selectedVariantIds)) {
+    return snapshot.selectedVariantIds.filter(
+      (id): id is string => typeof id === "string" && id.length > 0
+    );
+  }
+
+  if (
+    typeof snapshot.selectedVariantId === "string" &&
+    snapshot.selectedVariantId.length > 0
+  ) {
+    return [snapshot.selectedVariantId];
+  }
+
+  return [];
 }
 
 export interface RestoredSession {
@@ -55,6 +76,7 @@ function resolveInterruptedSession(
   const resolved: AdsSessionSnapshot = {
     ...snapshot,
     currentStep,
+    selectedVariantIds: normalizeSelectedVariantIds(snapshot),
   };
 
   if (currentStep === "draft") {
@@ -72,7 +94,7 @@ function resolveInterruptedSession(
             ...resolved,
             currentStep: "draft",
             adVariants: null,
-            selectedVariantId: null,
+            selectedVariantIds: [],
           },
           notice:
             notice ??

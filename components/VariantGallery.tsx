@@ -3,7 +3,12 @@
 import { useMemo, useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 import { publishToMeta, selectVariant } from "@/lib/api";
-import { AdFormat, AdVariant } from "@/lib/types";
+import {
+  AdFormat,
+  AdVariant,
+  MAX_SELECTED_VARIANTS,
+  MIN_SELECTED_VARIANTS,
+} from "@/lib/types";
 import { ApiErrorState } from "@/components/ApiErrorState";
 import { Button } from "@/components/ui/Button";
 import { Toast } from "@/components/ui/Toast";
@@ -14,10 +19,10 @@ interface VariantGalleryProps {
   variants: AdVariant[];
   format: AdFormat;
   campanaId: string | null;
-  selectedVariantId: string | null;
+  selectedVariantIds: string[];
   variantConfirmed: boolean;
   metaPublished: boolean;
-  onSelectedVariantChange: (id: string) => void;
+  onSelectedVariantIdsChange: (ids: string[]) => void;
   onVariantConfirmed: () => void;
   onMetaPublished: () => void;
   onRegenerate: () => Promise<void>;
@@ -41,10 +46,10 @@ export function VariantGallery({
   variants,
   format,
   campanaId,
-  selectedVariantId,
+  selectedVariantIds,
   variantConfirmed,
   metaPublished,
-  onSelectedVariantChange,
+  onSelectedVariantIdsChange,
   onVariantConfirmed,
   onMetaPublished,
   onRegenerate,
@@ -59,19 +64,37 @@ export function VariantGallery({
   const [confirmError, setConfirmError] = useState<string | null>(null);
   const [publishError, setPublishError] = useState<string | null>(null);
 
+  const maxSelectable = Math.min(MAX_SELECTED_VARIANTS, variants.length);
+  const selectedCount = selectedVariantIds.length;
+  const hasMinSelection = selectedCount >= MIN_SELECTED_VARIANTS;
+  const atMaxSelection = selectedCount >= maxSelectable;
+
   const detailVariant = useMemo(
     () => variants.find((variant) => variant.id === detailVariantId) ?? null,
     [variants, detailVariantId]
   );
 
+  function toggleVariant(id: string) {
+    if (selectedVariantIds.includes(id)) {
+      onSelectedVariantIdsChange(
+        selectedVariantIds.filter((selectedId) => selectedId !== id)
+      );
+      return;
+    }
+
+    if (atMaxSelection) return;
+
+    onSelectedVariantIdsChange([...selectedVariantIds, id]);
+  }
+
   async function handleConfirm() {
-    if (!selectedVariantId || !campanaId) return;
+    if (!hasMinSelection || !campanaId) return;
 
     setIsConfirming(true);
     setConfirmError(null);
 
     try {
-      await selectVariant(selectedVariantId, campanaId);
+      await selectVariant(selectedVariantIds, campanaId);
       onVariantConfirmed();
       setShowConfirmToast(true);
     } catch (error) {
@@ -82,13 +105,16 @@ export function VariantGallery({
   }
 
   async function handlePublishToMeta() {
-    if (!selectedVariantId || !campanaId) return;
+    if (!hasMinSelection || !campanaId) return;
 
     setIsPublishing(true);
     setPublishError(null);
 
     try {
-      await publishToMeta(campanaId, selectedVariantId);
+      await publishToMeta({
+        campana_id: campanaId,
+        variante_ids: selectedVariantIds,
+      });
       onMetaPublished();
       setShowPublishToast(true);
     } catch (error) {
@@ -98,8 +124,10 @@ export function VariantGallery({
     }
   }
 
-  function handleSelectVariant(id: string) {
-    onSelectedVariantChange(id);
+  function handleSelectFromDetail(id: string) {
+    const alreadySelected = selectedVariantIds.includes(id);
+    if (!alreadySelected && atMaxSelection) return;
+    toggleVariant(id);
     setDetailVariantId(null);
   }
 
@@ -111,8 +139,8 @@ export function VariantGallery({
             Variantes de anuncio
           </h2>
           <p className="text-sm text-neutral-500">
-            {variants.length} variantes generadas — selecciona la que mejor
-            represente tu campaña
+            {variants.length} variantes generadas — selecciona de{" "}
+            {MIN_SELECTED_VARIANTS} a {maxSelectable} para A/B testing
           </p>
         </div>
 
@@ -180,8 +208,9 @@ export function VariantGallery({
             <VariantCard
               variant={variant}
               format={format}
-              isSelected={selectedVariantId === variant.id}
-              onSelect={onSelectedVariantChange}
+              isSelected={selectedVariantIds.includes(variant.id)}
+              selectionDisabled={atMaxSelection}
+              onSelect={toggleVariant}
               onOpenDetail={() => setDetailVariantId(variant.id)}
             />
           </div>
@@ -197,7 +226,7 @@ export function VariantGallery({
           <Loader2 className="w-5 h-5 shrink-0 animate-spin text-brand-yellow mt-0.5" />
           <div>
             <p className="text-sm font-semibold text-brand-white">
-              Publicando en Meta Ads...
+              Publicando {selectedCount} variantes en Meta Ads...
             </p>
             <p className="text-sm text-neutral-400 mt-1">
               Esto puede tardar un momento (20–40 segundos aprox.).
@@ -210,41 +239,60 @@ export function VariantGallery({
         <div className="flex items-center gap-3 border border-brand-yellow/30 bg-brand-yellow/5 px-4 py-4">
           <Check className="w-5 h-5 shrink-0 text-brand-yellow" />
           <p className="text-sm text-brand-white">
-            Ya publicado en Meta Ads
+            Ya publicado en Meta Ads ({selectedCount} variantes)
           </p>
         </div>
       )}
 
-      {selectedVariantId && !variantConfirmed && (
+      {!metaPublished && (
         <div className="sticky bottom-0 pt-4 pb-2 bg-gradient-to-t from-brand-black via-brand-black to-transparent">
-          <Button
-            type="button"
-            fullWidth
-            onClick={handleConfirm}
-            disabled={isConfirming || !campanaId}
-          >
-            {isConfirming ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Enviando...
-              </>
-            ) : (
-              "Confirmar y continuar"
-            )}
-          </Button>
-        </div>
-      )}
+          {!hasMinSelection && (
+            <p className="mb-3 text-center text-sm text-neutral-400">
+              Selecciona al menos {MIN_SELECTED_VARIANTS} variantes para hacer
+              A/B testing
+              {selectedCount > 0 ? ` (${selectedCount} de ${maxSelectable})` : ""}
+            </p>
+          )}
 
-      {selectedVariantId && variantConfirmed && !metaPublished && (
-        <div className="sticky bottom-0 pt-4 pb-2 bg-gradient-to-t from-brand-black via-brand-black to-transparent">
-          <Button
-            type="button"
-            fullWidth
-            onClick={handlePublishToMeta}
-            disabled={isPublishing || !campanaId}
-          >
-            Publicar en Meta Ads
-          </Button>
+          {hasMinSelection && !variantConfirmed && (
+            <p className="mb-3 text-center text-sm text-neutral-400">
+              {selectedCount} variantes seleccionadas
+            </p>
+          )}
+
+          {!variantConfirmed ? (
+            <Button
+              type="button"
+              fullWidth
+              onClick={handleConfirm}
+              disabled={!hasMinSelection || isConfirming || !campanaId}
+            >
+              {isConfirming ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                "Confirmar y continuar"
+              )}
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              fullWidth
+              onClick={handlePublishToMeta}
+              disabled={!hasMinSelection || isPublishing || !campanaId}
+            >
+              {isPublishing ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Publicando...
+                </>
+              ) : (
+                `Publicar ${selectedCount} variantes en Meta Ads`
+              )}
+            </Button>
+          )}
         </div>
       )}
 
@@ -253,22 +301,23 @@ export function VariantGallery({
         format={format}
         isOpen={detailVariantId !== null}
         isSelected={
-          detailVariantId !== null && selectedVariantId === detailVariantId
+          detailVariantId !== null &&
+          selectedVariantIds.includes(detailVariantId)
         }
         onClose={() => setDetailVariantId(null)}
-        onSelect={handleSelectVariant}
+        onSelect={handleSelectFromDetail}
       />
 
       {showConfirmToast && (
         <Toast
-          message="Variante seleccionada — lista para publicar en Meta Ads"
+          message={`${selectedCount} variantes seleccionadas — listas para A/B testing en Meta Ads`}
           onClose={() => setShowConfirmToast(false)}
         />
       )}
 
       {showPublishToast && (
         <Toast
-          message="Anuncio creado en Meta Ads Manager (estado: Pausado). Revísalo y actívalo cuando estés listo."
+          message="Anuncios creados en Meta Ads Manager (estado: Pausado). Revísalos y actívalos cuando estés listo."
           onClose={() => setShowPublishToast(false)}
           duration={6000}
         />

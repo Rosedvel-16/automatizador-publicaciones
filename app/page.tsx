@@ -50,9 +50,7 @@ export default function HomePage() {
   const [draft, setDraft] = useState<AIDraft | null>(null);
   const [draftReview, setDraftReview] = useState<DraftReviewInput | null>(null);
   const [variants, setVariants] = useState<AdVariant[]>([]);
-  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
-    null
-  );
+  const [selectedVariantIds, setSelectedVariantIds] = useState<string[]>([]);
   const [variantConfirmed, setVariantConfirmed] = useState(false);
   const [metaPublished, setMetaPublished] = useState(false);
   const [isGeneratingAds, setIsGeneratingAds] = useState(false);
@@ -75,7 +73,14 @@ export default function HomePage() {
     setDraft(snapshot.aiDraft);
     setDraftReview(snapshot.draftReview);
     setVariants(snapshot.adVariants ?? []);
-    setSelectedVariantId(snapshot.selectedVariantId);
+    setSelectedVariantIds(
+      Array.isArray(snapshot.selectedVariantIds)
+        ? snapshot.selectedVariantIds
+        : typeof snapshot.selectedVariantId === "string" &&
+            snapshot.selectedVariantId
+          ? [snapshot.selectedVariantId]
+          : []
+    );
     setVariantConfirmed(snapshot.variantConfirmed ?? false);
     setMetaPublished(snapshot.metaPublished ?? false);
     setStep(snapshot.currentStep);
@@ -92,7 +97,7 @@ export default function HomePage() {
       aiDraft: draft,
       draftReview,
       adVariants: variants.length > 0 ? variants : null,
-      selectedVariantId,
+      selectedVariantIds,
       variantConfirmed,
       metaPublished,
     });
@@ -103,7 +108,7 @@ export default function HomePage() {
     draft,
     draftReview,
     variants,
-    selectedVariantId,
+    selectedVariantIds,
     variantConfirmed,
     metaPublished,
     saveSession,
@@ -122,7 +127,7 @@ export default function HomePage() {
     setDraft(null);
     setDraftReview(null);
     setVariants([]);
-    setSelectedVariantId(null);
+    setSelectedVariantIds([]);
     setVariantConfirmed(false);
     setMetaPublished(false);
     setApiError(null);
@@ -159,7 +164,7 @@ export default function HomePage() {
       setBrief(input);
       setDraftReview(null);
       setVariants([]);
-      setSelectedVariantId(null);
+      setSelectedVariantIds([]);
       setVariantConfirmed(false);
       setMetaPublished(false);
       setStep("loading");
@@ -236,7 +241,7 @@ export default function HomePage() {
     try {
       const result = await regenerateAdVariants({ ...brief, ...draftReview });
       setVariants(result);
-      setSelectedVariantId(null);
+      setSelectedVariantIds([]);
       setVariantConfirmed(false);
       setMetaPublished(false);
     } catch (error) {
@@ -262,8 +267,8 @@ export default function HomePage() {
     setStep("draft");
   }, []);
 
-  const handleSelectedVariantChange = useCallback((id: string) => {
-    setSelectedVariantId(id);
+  const handleSelectedVariantIdsChange = useCallback((ids: string[]) => {
+    setSelectedVariantIds(ids);
     setVariantConfirmed(false);
     setMetaPublished(false);
   }, []);
@@ -394,10 +399,10 @@ export default function HomePage() {
               variants={variants}
               format={brief.formato_anuncio}
               campanaId={draftReview?.campana_id ?? draft?.campana_id ?? null}
-              selectedVariantId={selectedVariantId}
+              selectedVariantIds={selectedVariantIds}
               variantConfirmed={variantConfirmed}
               metaPublished={metaPublished}
-              onSelectedVariantChange={handleSelectedVariantChange}
+              onSelectedVariantIdsChange={handleSelectedVariantIdsChange}
               onVariantConfirmed={() => setVariantConfirmed(true)}
               onMetaPublished={() => setMetaPublished(true)}
               onRegenerate={handleRegenerate}

@@ -48,17 +48,25 @@ function getErrorMessage(error: unknown): string {
 function CampaignCardSkeleton() {
   return (
     <div className="flex flex-col gap-4 border border-neutral-800 bg-neutral-900/40 p-5 animate-pulse">
-      <div className="flex items-start justify-between gap-3">
-        <div className="h-5 bg-neutral-800 rounded w-2/3" />
-        <div className="h-6 bg-neutral-800 rounded w-24 shrink-0" />
+      <div className="flex items-center justify-between gap-3">
+        <div className="h-6 bg-neutral-800 rounded w-28" />
+        <div className="h-4 w-4 bg-neutral-800 rounded shrink-0" />
       </div>
       <div className="space-y-2">
         <div className="h-4 bg-neutral-800 rounded w-full" />
         <div className="h-4 bg-neutral-800 rounded w-4/5" />
       </div>
+      <div className="space-y-2">
+        <div className="h-4 bg-neutral-800 rounded w-full" />
+        <div className="h-4 bg-neutral-800 rounded w-3/4" />
+      </div>
       <div className="h-3 bg-neutral-800 rounded w-32" />
     </div>
   );
+}
+
+function normalizeInlineText(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
 }
 
 function CampaignCard({ campana }: { campana: Campana }) {
@@ -66,6 +74,8 @@ function CampaignCard({ campana }: { campana: Campana }) {
   const status = getStatusConfig(campana.status);
   const showMetaPublished =
     campana.status === "publicada" && Boolean(campana.meta_ad_id);
+  const titulo = normalizeInlineText(campana.tema_busqueda);
+  const dolor = normalizeInlineText(campana.dolor_principal);
 
   function toggleExpanded() {
     setIsExpanded((prev) => !prev);
@@ -86,51 +96,49 @@ function CampaignCard({ campana }: { campana: Campana }) {
       onClick={toggleExpanded}
       onKeyDown={handleKeyDown}
       className={[
-        "flex flex-col gap-4 border border-neutral-800 bg-neutral-900/40 p-5",
+        "flex flex-col gap-3 border border-neutral-800 bg-neutral-900/40 p-5",
         "cursor-pointer transition-all duration-200 animate-fade-in",
         "hover:border-neutral-600 hover:bg-neutral-900/70",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow",
       ].join(" ")}
     >
-      <div className="flex items-start gap-3">
-        <h2
+      <div className="flex items-center justify-between gap-3">
+        <span
           className={[
-            "flex-1 min-w-0 text-sm font-semibold text-brand-white leading-snug",
-            !isExpanded && "line-clamp-2",
+            "inline-flex max-w-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wider border",
+            status.className,
           ].join(" ")}
         >
-          {campana.tema_busqueda}
-        </h2>
-
-        <div className="flex items-center gap-2 shrink-0">
-          <span
-            className={[
-              "inline-flex px-2 py-1 text-[10px] font-semibold uppercase tracking-wider border",
-              status.className,
-            ].join(" ")}
-          >
-            {status.label}
-          </span>
-          <ChevronDown
-            className={[
-              "w-4 h-4 text-neutral-500 transition-transform duration-200",
-              isExpanded ? "rotate-180" : "",
-            ].join(" ")}
-            aria-hidden
-          />
-        </div>
+          {status.label}
+        </span>
+        <ChevronDown
+          className={[
+            "w-4 h-4 shrink-0 text-neutral-500 transition-transform duration-200",
+            isExpanded ? "rotate-180" : "",
+          ].join(" ")}
+          aria-hidden
+        />
       </div>
 
-      <p
+      <h2
         className={[
-          "text-sm text-neutral-400 leading-relaxed",
+          "w-full text-sm font-semibold text-brand-white leading-relaxed break-words",
           !isExpanded && "line-clamp-2",
         ].join(" ")}
       >
-        {campana.dolor_principal}
+        {titulo}
+      </h2>
+
+      <p
+        className={[
+          "w-full text-sm text-neutral-400 leading-relaxed break-words",
+          !isExpanded && "line-clamp-2",
+        ].join(" ")}
+      >
+        {dolor}
       </p>
 
-      <div className="flex flex-col gap-2 mt-auto">
+      <div className="flex flex-col gap-2 mt-auto pt-1">
         <p className="text-xs text-neutral-500">
           {formatCampanaDate(campana.created_at)}
         </p>

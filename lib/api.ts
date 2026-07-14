@@ -5,6 +5,7 @@ import {
   Campana,
   DraftReviewInput,
   GenerateVariantsRequest,
+  PublicarCampanaInput,
 } from "./types";
 
 const TIMEOUT_INVESTIGATE_MS = 90_000;
@@ -217,11 +218,11 @@ function validateSelectVariantResponse(data: unknown): SelectVariantResponse {
 }
 
 export async function selectVariant(
-  varianteId: string,
+  varianteIds: string[],
   campanaId: string
 ): Promise<SelectVariantResponse> {
   const url = buildWebhookUrl("/seleccionar-variante");
-  const payload = { variante_id: varianteId, campana_id: campanaId };
+  const payload = { variante_ids: varianteIds, campana_id: campanaId };
   debugLog("selectVariant → payload", payload);
 
   const res = await fetch(url, {
@@ -284,11 +285,13 @@ function validatePublishToMetaResponse(data: unknown): PublishToMetaResponse {
 }
 
 export async function publishToMeta(
-  campanaId: string,
-  varianteId: string
+  input: PublicarCampanaInput
 ): Promise<PublishToMetaResponse> {
   const url = buildWebhookUrl("/publicar-en-meta");
-  const payload = { campana_id: campanaId, variante_id: varianteId };
+  const payload = {
+    campana_id: input.campana_id,
+    variante_ids: input.variante_ids,
+  };
   debugLog("publishToMeta → payload", payload);
 
   const controller = new AbortController();
@@ -438,4 +441,4 @@ export async function listarCampanas(): Promise<Campana[]> {
   return validateCampanas(raw);
 }
 
-export type { DraftReviewInput, GenerateVariantsRequest };
+export type { DraftReviewInput, GenerateVariantsRequest, PublicarCampanaInput };
