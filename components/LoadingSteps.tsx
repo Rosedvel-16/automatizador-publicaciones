@@ -25,12 +25,13 @@ export function LoadingSteps({ onComplete, apiDone = false }: LoadingStepsProps)
 
   useEffect(() => {
     if (allDone) return;
+    if (activeIndex >= LOADING_STEPS.length - 1) return;
 
     const duration =
       ROTATION_MIN_MS + Math.random() * (ROTATION_MAX_MS - ROTATION_MIN_MS);
 
     const timer = setTimeout(() => {
-      setActiveIndex((prev) => (prev + 1) % LOADING_STEPS.length);
+      setActiveIndex((prev) => Math.min(prev + 1, LOADING_STEPS.length - 1));
     }, duration);
 
     return () => clearTimeout(timer);
@@ -48,9 +49,9 @@ export function LoadingSteps({ onComplete, apiDone = false }: LoadingStepsProps)
 
         <ul className="flex flex-col gap-4" role="list">
           {LOADING_STEPS.map((step, index) => {
-            const isCompleted = allDone;
+            const isCompleted = allDone || index < activeIndex;
             const isActive = !allDone && index === activeIndex;
-            const isPending = !allDone && index !== activeIndex;
+            const isPending = !allDone && index > activeIndex;
 
             return (
               <li

@@ -246,28 +246,40 @@ const PUBLISH_META_TIMEOUT_MESSAGE =
   "La publicación en Meta tardó demasiado. Verifica en Meta Ads Manager si se creó parcialmente.";
 
 export interface PublishToMetaResponse {
-  success: boolean;
-  message: string;
+  meta_campaign_id: string;
+  meta_adset_id: string;
+  meta_ad_id: string;
 }
 
 function validatePublishToMetaResponse(data: unknown): PublishToMetaResponse {
   if (!data || typeof data !== "object") {
+    console.error("[api] publishToMeta — respuesta inválida:", data);
     throw new Error(
       "La respuesta del servidor no tiene el formato esperado al publicar en Meta."
     );
   }
 
   const record = data as Record<string, unknown>;
+  const { meta_campaign_id, meta_adset_id, meta_ad_id } = record;
 
-  if (typeof record.success !== "boolean" || !isNonEmptyString(record.message)) {
+  if (
+    !isNonEmptyString(meta_campaign_id) ||
+    !isNonEmptyString(meta_adset_id) ||
+    !isNonEmptyString(meta_ad_id)
+  ) {
+    console.error(
+      "[api] publishToMeta — faltan IDs de Meta en la respuesta:",
+      data
+    );
     throw new Error(
       "La respuesta del servidor no tiene el formato esperado al publicar en Meta."
     );
   }
 
   return {
-    success: record.success,
-    message: record.message,
+    meta_campaign_id,
+    meta_adset_id,
+    meta_ad_id,
   };
 }
 
@@ -305,6 +317,10 @@ export async function publishToMeta(
         typeof record?.error === "string" && record.error.trim()
           ? record.error
           : null;
+      console.error("[api] publishToMeta — error HTTP:", {
+        status: res.status,
+        body: data,
+      });
       throw new Error(specificError || `Error al publicar en Meta: ${res.status}`);
     }
 
