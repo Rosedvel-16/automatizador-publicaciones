@@ -80,6 +80,9 @@ export interface Campana {
   meta_adset_id: string | null;
   meta_ad_id: string | null;
   published_at: string | null;
+  variante_seleccionada_id: string | null;
+  variante_titulo: string | null;
+  variante_image_url: string | null;
 }
 
 export const AD_FORMAT_LABELS: Record<AdFormat, string> = {

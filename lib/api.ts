@@ -354,6 +354,9 @@ const CAMPANA_KEYS: (keyof Campana)[] = [
   "meta_adset_id",
   "meta_ad_id",
   "published_at",
+  "variante_seleccionada_id",
+  "variante_titulo",
+  "variante_image_url",
 ];
 
 function validateCampanas(data: unknown): Campana[] {
@@ -383,6 +386,9 @@ function validateCampanas(data: unknown): Campana[] {
       "meta_adset_id",
       "meta_ad_id",
       "published_at",
+      "variante_seleccionada_id",
+      "variante_titulo",
+      "variante_image_url",
     ] as const;
 
     for (const key of nullableStringKeys) {
@@ -419,6 +425,9 @@ function validateCampanas(data: unknown): Campana[] {
       meta_adset_id: record.meta_adset_id as string | null,
       meta_ad_id: record.meta_ad_id as string | null,
       published_at: record.published_at as string | null,
+      variante_seleccionada_id: record.variante_seleccionada_id as string | null,
+      variante_titulo: record.variante_titulo as string | null,
+      variante_image_url: record.variante_image_url as string | null,
     };
   });
 }

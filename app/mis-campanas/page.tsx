@@ -1,13 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useState, type KeyboardEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type KeyboardEvent,
+  type MouseEvent,
+} from "react";
 import Link from "next/link";
 import { Check, ChevronDown, Loader2 } from "lucide-react";
-import { listarCampanas } from "@/lib/api";
+import { listarCampanas, publishToMeta } from "@/lib/api";
 import { Campana } from "@/lib/types";
 import { formatCampanaDate } from "@/lib/utils";
 import { AppHeader } from "@/components/AppHeader";
 import { Button } from "@/components/ui/Button";
+import { Toast } from "@/components/ui/Toast";
 
 const STATUS_CONFIG: Record<
   string,
@@ -15,13 +22,11 @@ const STATUS_CONFIG: Record<
 > = {
   en_investigacion: {
     label: "En investigación",
-    className:
-      "bg-neutral-800 text-neutral-400 border-neutral-700",
+    className: "bg-neutral-800 text-neutral-400 border-neutral-700",
   },
   variante_seleccionada: {
     label: "Variante seleccionada",
-    className:
-      "bg-brand-yellow/10 text-brand-yellow border-brand-yellow/40",
+    className: "bg-brand-yellow/10 text-brand-yellow border-brand-yellow/40",
   },
   publicada: {
     label: "Publicada",
@@ -69,9 +74,19 @@ function normalizeInlineText(value: string): string {
   return value.replace(/\s+/g, " ").trim();
 }
 
-function CampaignCard({ campana }: { campana: Campana }) {
+interface CampaignCardProps {
+  campana: Campana;
+  onCampanaUpdated: (campana: Campana) => void;
+}
+
+function CampaignCard({ campana, onCampanaUpdated }: CampaignCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
+  const [showPublishToast, setShowPublishToast] = useState(false);
+
   const status = getStatusConfig(campana.status);
+  const canPublish = Boolean(campana.variante_seleccionada_id);
   const showMetaPublished =
     campana.status === "publicada" && Boolean(campana.meta_ad_id);
   const titulo = normalizeInlineText(campana.tema_busqueda);
@@ -85,6 +100,37 @@ function CampaignCard({ campana }: { campana: Campana }) {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       toggleExpanded();
+    }
+  }
+
+  async function handlePublish(event: MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!campana.variante_seleccionada_id || isPublishing) return;
+
+    setIsPublishing(true);
+    setPublishError(null);
+
+    try {
+      const result = await publishToMeta({
+        campana_id: campana.id,
+        variante_ids: [campana.variante_seleccionada_id],
+      });
+
+      onCampanaUpdated({
+        ...campana,
+        status: "publicada",
+        meta_campaign_id: result.meta_campaign_id,
+        meta_adset_id: result.meta_adset_id,
+        meta_ad_id: result.meta_ad_id,
+        published_at: new Date().toISOString(),
+      });
+      setShowPublishToast(true);
+    } catch (error) {
+      setPublishError(getErrorMessage(error));
+    } finally {
+      setIsPublishing(false);
     }
   }
 
@@ -149,7 +195,47 @@ function CampaignCard({ campana }: { campana: Campana }) {
             Publicado en Meta Ads
           </p>
         )}
+
+        {canPublish && (
+          <div
+            className="flex flex-col gap-2 pt-1"
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => event.stopPropagation()}
+          >
+            <Button
+              type="button"
+              fullWidth
+              onClick={handlePublish}
+              disabled={isPublishing}
+            >
+              {isPublishing ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Publicando...
+                </>
+              ) : (
+                "Publicar"
+              )}
+            </Button>
+            <p className="text-[11px] leading-relaxed text-neutral-600">
+              Esto creará una nueva campaña en Meta Ads (pausada), incluso si ya
+              publicaste esta antes
+            </p>
+            {publishError && (
+              <p className="text-xs leading-relaxed text-red-400" role="alert">
+                {publishError}
+              </p>
+            )}
+          </div>
+        )}
       </div>
+
+      {showPublishToast && (
+        <Toast
+          message="Publicado en Meta Ads"
+          onClose={() => setShowPublishToast(false)}
+        />
+      )}
     </article>
   );
 }
@@ -176,6 +262,12 @@ export default function MisCampanasPage() {
   useEffect(() => {
     loadCampanas();
   }, [loadCampanas]);
+
+  const handleCampanaUpdated = useCallback((updated: Campana) => {
+    setCampanas((prev) =>
+      prev.map((campana) => (campana.id === updated.id ? updated : campana))
+    );
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -233,7 +325,11 @@ export default function MisCampanasPage() {
         {!isLoading && !error && campanas.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {campanas.map((campana) => (
-              <CampaignCard key={campana.id} campana={campana} />
+              <CampaignCard
+                key={campana.id}
+                campana={campana}
+                onCampanaUpdated={handleCampanaUpdated}
+              />
             ))}
           </div>
         )}
