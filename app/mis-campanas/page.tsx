@@ -10,10 +10,11 @@ import {
 import Link from "next/link";
 import { Check, ChevronDown, Loader2 } from "lucide-react";
 import { listarCampanas, publishToMeta } from "@/lib/api";
-import { Campana } from "@/lib/types";
-import { formatCampanaDate } from "@/lib/utils";
+import { BUDGET_PER_VARIANT_SOLES, Campana } from "@/lib/types";
+import { formatCampanaDate, formatCurrency } from "@/lib/utils";
 import { AppHeader } from "@/components/AppHeader";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { Toast } from "@/components/ui/Toast";
 
 const STATUS_CONFIG: Record<
@@ -84,13 +85,24 @@ function CampaignCard({ campana, onCampanaUpdated }: CampaignCardProps) {
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [showPublishToast, setShowPublishToast] = useState(false);
+  const [presupuestoTotal, setPresupuestoTotal] = useState(
+    String(BUDGET_PER_VARIANT_SOLES)
+  );
+  const [presupuestoError, setPresupuestoError] = useState<string | null>(null);
 
   const status = getStatusConfig(campana.status);
   const canPublish = Boolean(campana.variante_seleccionada_id);
   const showMetaPublished =
     campana.status === "publicada" && Boolean(campana.meta_ad_id);
+  const metaAdsManagerUrl = campana.meta_campaign_id
+    ? `https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=1576952164432427&selected_campaign_ids=${campana.meta_campaign_id}`
+    : null;
   const titulo = normalizeInlineText(campana.tema_busqueda);
   const dolor = normalizeInlineText(campana.dolor_principal);
+  const minPresupuesto = BUDGET_PER_VARIANT_SOLES;
+  const presupuestoValue = parseFloat(presupuestoTotal);
+  const hasValidPresupuesto =
+    !Number.isNaN(presupuestoValue) && presupuestoValue >= minPresupuesto;
 
   function toggleExpanded() {
     setIsExpanded((prev) => !prev);
@@ -109,13 +121,22 @@ function CampaignCard({ campana, onCampanaUpdated }: CampaignCardProps) {
 
     if (!campana.variante_seleccionada_id || isPublishing) return;
 
+    if (!hasValidPresupuesto) {
+      setPresupuestoError(
+        `Ingresa un presupuesto de al menos ${formatCurrency(minPresupuesto)}`
+      );
+      return;
+    }
+
     setIsPublishing(true);
     setPublishError(null);
+    setPresupuestoError(null);
 
     try {
       const result = await publishToMeta({
         campana_id: campana.id,
         variante_ids: [campana.variante_seleccionada_id],
+        presupuesto_total: presupuestoValue,
       });
 
       onCampanaUpdated({
@@ -185,9 +206,27 @@ function CampaignCard({ campana, onCampanaUpdated }: CampaignCardProps) {
       </p>
 
       <div className="flex flex-col gap-2 mt-auto pt-1">
-        <p className="text-xs text-neutral-500">
-          {formatCampanaDate(campana.created_at)}
-        </p>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          <p className="text-xs text-neutral-500">
+            {formatCampanaDate(campana.created_at)}
+          </p>
+          {metaAdsManagerUrl && (
+            <a
+              href={metaAdsManagerUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(event) => event.stopPropagation()}
+              className={[
+                "inline-flex items-center justify-center gap-2 px-3 py-1.5 text-[11px] font-semibold",
+                "border border-neutral-700 text-neutral-300 bg-transparent",
+                "transition-colors duration-200 hover:border-neutral-500 hover:text-brand-white",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500",
+              ].join(" ")}
+            >
+              Ver en Meta Ads Manager
+            </a>
+          )}
+        </div>
 
         {showMetaPublished && (
           <p className="inline-flex items-center gap-1.5 text-xs text-brand-white">
@@ -202,11 +241,26 @@ function CampaignCard({ campana, onCampanaUpdated }: CampaignCardProps) {
             onClick={(event) => event.stopPropagation()}
             onKeyDown={(event) => event.stopPropagation()}
           >
+            <Input
+              label="Presupuesto diario total (S/)"
+              type="number"
+              min={minPresupuesto}
+              step="1"
+              prefix="S/"
+              value={presupuestoTotal}
+              onChange={(e) => {
+                setPresupuestoTotal(e.target.value);
+                setPresupuestoError(null);
+              }}
+              error={presupuestoError ?? undefined}
+              hint={`Mínimo sugerido: ${formatCurrency(minPresupuesto)}`}
+              disabled={isPublishing}
+            />
             <Button
               type="button"
               fullWidth
               onClick={handlePublish}
-              disabled={isPublishing}
+              disabled={isPublishing || !hasValidPresupuesto}
             >
               {isPublishing ? (
                 <>

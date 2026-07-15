@@ -33,7 +33,12 @@ export interface BriefInput {
   link_venta: string;
   pais_mercado: MarketCountry;
   formato_anuncio: AdFormat;
+  num_variantes: number;
 }
+
+export const MIN_NUM_VARIANTES = 2;
+export const MAX_NUM_VARIANTES = 8;
+export const DEFAULT_NUM_VARIANTES = 4;
 
 export interface AIDraft {
   campana_id: string;
@@ -62,10 +67,12 @@ export interface GenerateVariantsRequest extends BriefInput, DraftReviewInput {}
 export interface PublicarCampanaInput {
   campana_id: string;
   variante_ids: string[];
+  presupuesto_total: number;
 }
 
 export const MIN_SELECTED_VARIANTS = 2;
 export const MAX_SELECTED_VARIANTS = 4;
+export const BUDGET_PER_VARIANT_SOLES = 20;
 
 export interface Campana {
   id: string;

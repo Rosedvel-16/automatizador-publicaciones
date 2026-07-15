@@ -3,8 +3,11 @@ import {
   AIDraft,
   BriefInput,
   Campana,
+  DEFAULT_NUM_VARIANTES,
   DraftReviewInput,
   GenerateVariantsRequest,
+  MAX_NUM_VARIANTES,
+  MIN_NUM_VARIANTES,
   PublicarCampanaInput,
 } from "./types";
 
@@ -163,14 +166,25 @@ export async function generateAdVariants(
   request: GenerateVariantsRequest
 ): Promise<AdVariant[]> {
   const url = buildWebhookUrl("/generar-anuncios");
-  debugLog("generateAdVariants → payload", request);
+  const numVariantes =
+    typeof request.num_variantes === "number" &&
+    request.num_variantes >= MIN_NUM_VARIANTES &&
+    request.num_variantes <= MAX_NUM_VARIANTES
+      ? request.num_variantes
+      : DEFAULT_NUM_VARIANTES;
+
+  const payload = {
+    ...request,
+    num_variantes: numVariantes,
+  };
+  debugLog("generateAdVariants → payload", payload);
 
   const res = await fetchWithTimeout(
     url,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(request),
+      body: JSON.stringify(payload),
     },
     TIMEOUT_GENERATE_MS
   );
@@ -291,6 +305,7 @@ export async function publishToMeta(
   const payload = {
     campana_id: input.campana_id,
     variante_ids: input.variante_ids,
+    presupuesto_total: input.presupuesto_total,
   };
   debugLog("publishToMeta → payload", payload);
 

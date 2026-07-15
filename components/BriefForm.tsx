@@ -4,7 +4,10 @@ import { FormEvent, useState } from "react";
 import {
   AdFormat,
   BriefInput,
+  DEFAULT_NUM_VARIANTES,
   MarketCountry,
+  MAX_NUM_VARIANTES,
+  MIN_NUM_VARIANTES,
   ProductType,
   AD_FORMAT_LABELS,
 } from "@/lib/types";
@@ -25,6 +28,7 @@ interface FormErrors {
   link_venta?: string;
   pais_mercado?: string;
   formato_anuncio?: string;
+  num_variantes?: string;
 }
 
 const PRODUCT_TYPES: ProductType[] = ["Curso", "Ebook", "Podcast"];
@@ -40,6 +44,14 @@ const COUNTRIES: MarketCountry[] = [
 
 const AD_FORMATS: AdFormat[] = ["1:1", "9:16", "1.91:1"];
 
+const VARIANT_COUNT_OPTIONS = Array.from(
+  { length: MAX_NUM_VARIANTES - MIN_NUM_VARIANTES + 1 },
+  (_, i) => {
+    const value = MIN_NUM_VARIANTES + i;
+    return { value: String(value), label: String(value) };
+  }
+);
+
 function isValidUrl(value: string): boolean {
   try {
     const url = new URL(value);
@@ -47,6 +59,18 @@ function isValidUrl(value: string): boolean {
   } catch {
     return false;
   }
+}
+
+function clampNumVariantes(value: number | undefined): number {
+  if (
+    typeof value !== "number" ||
+    Number.isNaN(value) ||
+    value < MIN_NUM_VARIANTES ||
+    value > MAX_NUM_VARIANTES
+  ) {
+    return DEFAULT_NUM_VARIANTES;
+  }
+  return value;
 }
 
 export function BriefForm({ onSubmit, initialValues }: BriefFormProps) {
@@ -67,6 +91,9 @@ export function BriefForm({ onSubmit, initialValues }: BriefFormProps) {
   );
   const [formatoAnuncio, setFormatoAnuncio] = useState<AdFormat>(
     initialValues?.formato_anuncio ?? "1:1"
+  );
+  const [numVariantes, setNumVariantes] = useState(
+    String(clampNumVariantes(initialValues?.num_variantes))
   );
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -95,6 +122,15 @@ export function BriefForm({ onSubmit, initialValues }: BriefFormProps) {
       next.formato_anuncio = "Selecciona un formato de anuncio";
     }
 
+    const numVariantesValue = parseInt(numVariantes, 10);
+    if (
+      Number.isNaN(numVariantesValue) ||
+      numVariantesValue < MIN_NUM_VARIANTES ||
+      numVariantesValue > MAX_NUM_VARIANTES
+    ) {
+      next.num_variantes = `Selecciona entre ${MIN_NUM_VARIANTES} y ${MAX_NUM_VARIANTES} variantes`;
+    }
+
     return next;
   }
 
@@ -112,6 +148,7 @@ export function BriefForm({ onSubmit, initialValues }: BriefFormProps) {
       link_venta: linkVenta.trim(),
       pais_mercado: paisMercado,
       formato_anuncio: formatoAnuncio,
+      num_variantes: parseInt(numVariantes, 10),
     });
   }
 
@@ -160,14 +197,28 @@ export function BriefForm({ onSubmit, initialValues }: BriefFormProps) {
           error={errors.link_venta}
         />
 
-        <div className="md:col-span-2 md:max-w-xs">
+        <Select
+          label="País del mercado"
+          value={paisMercado}
+          onChange={(e) => setPaisMercado(e.target.value as MarketCountry)}
+          error={errors.pais_mercado}
+          options={COUNTRIES.map((c) => ({ value: c, label: c }))}
+        />
+
+        <div className="flex flex-col gap-1.5">
           <Select
-            label="País del mercado"
-            value={paisMercado}
-            onChange={(e) => setPaisMercado(e.target.value as MarketCountry)}
-            error={errors.pais_mercado}
-            options={COUNTRIES.map((c) => ({ value: c, label: c }))}
+            label="Cantidad de variantes"
+            value={numVariantes}
+            onChange={(e) => setNumVariantes(e.target.value)}
+            error={errors.num_variantes}
+            options={VARIANT_COUNT_OPTIONS}
           />
+          {!errors.num_variantes && (
+            <p className="text-xs text-neutral-500">
+              Más variantes significa más costo de generación (imágenes + IA).
+              Recomendado: 4-6.
+            </p>
+          )}
         </div>
       </div>
 

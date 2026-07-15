@@ -1,16 +1,19 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 import { publishToMeta, selectVariant } from "@/lib/api";
 import {
   AdFormat,
   AdVariant,
+  BUDGET_PER_VARIANT_SOLES,
   MAX_SELECTED_VARIANTS,
   MIN_SELECTED_VARIANTS,
 } from "@/lib/types";
+import { formatCurrency } from "@/lib/utils";
 import { ApiErrorState } from "@/components/ApiErrorState";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { Toast } from "@/components/ui/Toast";
 import { VariantCard } from "@/components/VariantCard";
 import { VariantDetailModal } from "@/components/VariantDetailModal";
@@ -63,16 +66,43 @@ export function VariantGallery({
   const [isPublishing, setIsPublishing] = useState(false);
   const [confirmError, setConfirmError] = useState<string | null>(null);
   const [publishError, setPublishError] = useState<string | null>(null);
+  const [presupuestoTotal, setPresupuestoTotal] = useState("");
+  const [presupuestoError, setPresupuestoError] = useState<string | null>(null);
 
   const maxSelectable = Math.min(MAX_SELECTED_VARIANTS, variants.length);
   const selectedCount = selectedVariantIds.length;
   const hasMinSelection = selectedCount >= MIN_SELECTED_VARIANTS;
   const atMaxSelection = selectedCount >= maxSelectable;
+  const minPresupuesto = selectedCount * BUDGET_PER_VARIANT_SOLES;
+
+  const presupuestoValue = parseFloat(presupuestoTotal);
+  const hasValidPresupuesto =
+    !Number.isNaN(presupuestoValue) && presupuestoValue >= minPresupuesto;
+  const presupuestoPorVariante =
+    hasValidPresupuesto && selectedCount > 0
+      ? presupuestoValue / selectedCount
+      : null;
 
   const detailVariant = useMemo(
     () => variants.find((variant) => variant.id === detailVariantId) ?? null,
     [variants, detailVariantId]
   );
+
+  useEffect(() => {
+    if (!hasMinSelection) {
+      setPresupuestoTotal("");
+      setPresupuestoError(null);
+      return;
+    }
+
+    setPresupuestoTotal((prev) => {
+      const current = parseFloat(prev);
+      if (!prev || Number.isNaN(current) || current < minPresupuesto) {
+        return String(minPresupuesto);
+      }
+      return prev;
+    });
+  }, [hasMinSelection, minPresupuesto]);
 
   function toggleVariant(id: string) {
     if (selectedVariantIds.includes(id)) {
@@ -107,13 +137,22 @@ export function VariantGallery({
   async function handlePublishToMeta() {
     if (!hasMinSelection || !campanaId) return;
 
+    if (!hasValidPresupuesto) {
+      setPresupuestoError(
+        `Ingresa un presupuesto de al menos ${formatCurrency(minPresupuesto)}`
+      );
+      return;
+    }
+
     setIsPublishing(true);
     setPublishError(null);
+    setPresupuestoError(null);
 
     try {
       await publishToMeta({
         campana_id: campanaId,
         variante_ids: selectedVariantIds,
+        presupuesto_total: presupuestoValue,
       });
       onMetaPublished();
       setShowPublishToast(true);
@@ -260,6 +299,33 @@ export function VariantGallery({
             </p>
           )}
 
+          {hasMinSelection && variantConfirmed && (
+            <div className="mb-4 max-w-md mx-auto w-full flex flex-col gap-2">
+              <Input
+                label="Presupuesto diario total (S/)"
+                type="number"
+                min={minPresupuesto}
+                step="1"
+                prefix="S/"
+                value={presupuestoTotal}
+                onChange={(e) => {
+                  setPresupuestoTotal(e.target.value);
+                  setPresupuestoError(null);
+                }}
+                error={presupuestoError ?? undefined}
+                hint={`Mínimo sugerido: ${formatCurrency(minPresupuesto)}`}
+                disabled={isPublishing}
+              />
+              {presupuestoPorVariante !== null && (
+                <p className="text-xs text-neutral-400 leading-relaxed">
+                  Esto se repartirá en {formatCurrency(presupuestoPorVariante)}{" "}
+                  por día para cada una de las {selectedCount} variantes
+                  seleccionadas.
+                </p>
+              )}
+            </div>
+          )}
+
           {!variantConfirmed ? (
             <Button
               type="button"
@@ -281,7 +347,12 @@ export function VariantGallery({
               type="button"
               fullWidth
               onClick={handlePublishToMeta}
-              disabled={!hasMinSelection || isPublishing || !campanaId}
+              disabled={
+                !hasMinSelection ||
+                !hasValidPresupuesto ||
+                isPublishing ||
+                !campanaId
+              }
             >
               {isPublishing ? (
                 <>
