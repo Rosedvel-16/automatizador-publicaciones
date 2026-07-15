@@ -77,11 +77,14 @@ export function VariantGallery({
 
   const presupuestoValue = parseFloat(presupuestoTotal);
   const hasValidPresupuesto =
-    !Number.isNaN(presupuestoValue) && presupuestoValue >= minPresupuesto;
+    !Number.isNaN(presupuestoValue) && presupuestoValue > 0;
   const presupuestoPorVariante =
     hasValidPresupuesto && selectedCount > 0
       ? presupuestoValue / selectedCount
       : null;
+  const isLowBudgetPerVariant =
+    presupuestoPorVariante !== null &&
+    presupuestoPorVariante < BUDGET_PER_VARIANT_SOLES;
 
   const detailVariant = useMemo(
     () => variants.find((variant) => variant.id === detailVariantId) ?? null,
@@ -97,7 +100,7 @@ export function VariantGallery({
 
     setPresupuestoTotal((prev) => {
       const current = parseFloat(prev);
-      if (!prev || Number.isNaN(current) || current < minPresupuesto) {
+      if (!prev || Number.isNaN(current) || current <= 0) {
         return String(minPresupuesto);
       }
       return prev;
@@ -139,7 +142,7 @@ export function VariantGallery({
 
     if (!hasValidPresupuesto) {
       setPresupuestoError(
-        `Ingresa un presupuesto de al menos ${formatCurrency(minPresupuesto)}`
+        "Ingresa un presupuesto diario mayor a 0 para publicar"
       );
       return;
     }
@@ -179,7 +182,7 @@ export function VariantGallery({
           </h2>
           <p className="text-sm text-neutral-500">
             {variants.length} variantes generadas — selecciona de{" "}
-            {MIN_SELECTED_VARIANTS} a {maxSelectable} para A/B testing
+            {MIN_SELECTED_VARIANTS} a {maxSelectable} para publicar
           </p>
         </div>
 
@@ -265,7 +268,11 @@ export function VariantGallery({
           <Loader2 className="w-5 h-5 shrink-0 animate-spin text-brand-yellow mt-0.5" />
           <div>
             <p className="text-sm font-semibold text-brand-white">
-              Publicando {selectedCount} variantes en Meta Ads...
+              Publicando{" "}
+              {selectedCount === 1
+                ? "1 variante"
+                : `${selectedCount} variantes`}{" "}
+              en Meta Ads...
             </p>
             <p className="text-sm text-neutral-400 mt-1">
               Esto puede tardar un momento (20–40 segundos aprox.).
@@ -278,7 +285,11 @@ export function VariantGallery({
         <div className="flex items-center gap-3 border border-brand-yellow/30 bg-brand-yellow/5 px-4 py-4">
           <Check className="w-5 h-5 shrink-0 text-brand-yellow" />
           <p className="text-sm text-brand-white">
-            Ya publicado en Meta Ads ({selectedCount} variantes)
+            Ya publicado en Meta Ads (
+            {selectedCount === 1
+              ? "1 variante"
+              : `${selectedCount} variantes`}
+            )
           </p>
         </div>
       )}
@@ -287,15 +298,16 @@ export function VariantGallery({
         <div className="sticky bottom-0 pt-4 pb-2 bg-gradient-to-t from-brand-black via-brand-black to-transparent">
           {!hasMinSelection && (
             <p className="mb-3 text-center text-sm text-neutral-400">
-              Selecciona al menos {MIN_SELECTED_VARIANTS} variantes para hacer
-              A/B testing
+              Selecciona al menos {MIN_SELECTED_VARIANTS} variante para publicar
               {selectedCount > 0 ? ` (${selectedCount} de ${maxSelectable})` : ""}
             </p>
           )}
 
           {hasMinSelection && !variantConfirmed && (
             <p className="mb-3 text-center text-sm text-neutral-400">
-              {selectedCount} variantes seleccionadas
+              {selectedCount === 1
+                ? "1 variante seleccionada"
+                : `${selectedCount} variantes seleccionadas`}
             </p>
           )}
 
@@ -304,7 +316,7 @@ export function VariantGallery({
               <Input
                 label="Presupuesto diario total (S/)"
                 type="number"
-                min={minPresupuesto}
+                min={0}
                 step="1"
                 prefix="S/"
                 value={presupuestoTotal}
@@ -313,16 +325,32 @@ export function VariantGallery({
                   setPresupuestoError(null);
                 }}
                 error={presupuestoError ?? undefined}
-                hint={`Mínimo sugerido: ${formatCurrency(minPresupuesto)}`}
                 disabled={isPublishing}
               />
-              {presupuestoPorVariante !== null && (
-                <p className="text-xs text-neutral-400 leading-relaxed">
-                  Esto se repartirá en {formatCurrency(presupuestoPorVariante)}{" "}
-                  por día para cada una de las {selectedCount} variantes
-                  seleccionadas.
+              <div className="flex flex-col gap-1.5 text-xs leading-relaxed">
+                <p className="text-neutral-500">
+                  Sugerido: al menos {formatCurrency(minPresupuesto)}/día para
+                  que Meta pueda entregar bien{" "}
+                  {selectedCount === 1
+                    ? "el anuncio"
+                    : "cada anuncio"}
+                  .
                 </p>
-              )}
+                {hasValidPresupuesto && selectedCount > 0 && (
+                  <p className="text-neutral-400">
+                    {selectedCount === 1
+                      ? `Con ${formatCurrency(presupuestoValue)} para 1 variante, tendrá un presupuesto diario de ${formatCurrency(presupuestoPorVariante!)}.`
+                      : `Con ${formatCurrency(presupuestoValue)} repartidos entre ${selectedCount} variantes, cada una tendrá un presupuesto diario de ${formatCurrency(presupuestoPorVariante!)}.`}
+                  </p>
+                )}
+                {isLowBudgetPerVariant && (
+                  <p className="text-amber-400">
+                    Este monto es bajo por variante — Meta podría no entregar el
+                    anuncio de forma óptima o rechazar el presupuesto mínimo
+                    permitido.
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
@@ -360,7 +388,9 @@ export function VariantGallery({
                   Publicando...
                 </>
               ) : (
-                `Publicar ${selectedCount} variantes en Meta Ads`
+                `Publicar ${selectedCount} ${
+                  selectedCount === 1 ? "variante" : "variantes"
+                } en Meta Ads`
               )}
             </Button>
           )}
@@ -381,14 +411,22 @@ export function VariantGallery({
 
       {showConfirmToast && (
         <Toast
-          message={`${selectedCount} variantes seleccionadas — listas para A/B testing en Meta Ads`}
+          message={
+            selectedCount === 1
+              ? "1 variante seleccionada — lista para publicar en Meta Ads"
+              : `${selectedCount} variantes seleccionadas — listas para publicar en Meta Ads`
+          }
           onClose={() => setShowConfirmToast(false)}
         />
       )}
 
       {showPublishToast && (
         <Toast
-          message="Anuncios creados en Meta Ads Manager (estado: Pausado). Revísalos y actívalos cuando estés listo."
+          message={
+            selectedCount === 1
+              ? "Anuncio creado en Meta Ads Manager (estado: Pausado). Revísalo y actívalo cuando estés listo."
+              : "Anuncios creados en Meta Ads Manager (estado: Pausado). Revísalos y actívalos cuando estés listo."
+          }
           onClose={() => setShowPublishToast(false)}
           duration={6000}
         />

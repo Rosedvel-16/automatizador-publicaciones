@@ -102,7 +102,9 @@ function CampaignCard({ campana, onCampanaUpdated }: CampaignCardProps) {
   const minPresupuesto = BUDGET_PER_VARIANT_SOLES;
   const presupuestoValue = parseFloat(presupuestoTotal);
   const hasValidPresupuesto =
-    !Number.isNaN(presupuestoValue) && presupuestoValue >= minPresupuesto;
+    !Number.isNaN(presupuestoValue) && presupuestoValue > 0;
+  const isLowBudget =
+    hasValidPresupuesto && presupuestoValue < BUDGET_PER_VARIANT_SOLES;
 
   function toggleExpanded() {
     setIsExpanded((prev) => !prev);
@@ -123,7 +125,7 @@ function CampaignCard({ campana, onCampanaUpdated }: CampaignCardProps) {
 
     if (!hasValidPresupuesto) {
       setPresupuestoError(
-        `Ingresa un presupuesto de al menos ${formatCurrency(minPresupuesto)}`
+        "Ingresa un presupuesto diario mayor a 0 para publicar"
       );
       return;
     }
@@ -244,7 +246,7 @@ function CampaignCard({ campana, onCampanaUpdated }: CampaignCardProps) {
             <Input
               label="Presupuesto diario total (S/)"
               type="number"
-              min={minPresupuesto}
+              min={0}
               step="1"
               prefix="S/"
               value={presupuestoTotal}
@@ -253,9 +255,27 @@ function CampaignCard({ campana, onCampanaUpdated }: CampaignCardProps) {
                 setPresupuestoError(null);
               }}
               error={presupuestoError ?? undefined}
-              hint={`Mínimo sugerido: ${formatCurrency(minPresupuesto)}`}
               disabled={isPublishing}
             />
+            <div className="flex flex-col gap-1.5 text-[11px] leading-relaxed">
+              <p className="text-neutral-500">
+                Sugerido: al menos {formatCurrency(minPresupuesto)}/día para que
+                Meta pueda entregar bien el anuncio.
+              </p>
+              {hasValidPresupuesto && (
+                <p className="text-neutral-400">
+                  Con {formatCurrency(presupuestoValue)} para 1 variante, tendrá
+                  un presupuesto diario de {formatCurrency(presupuestoValue)}.
+                </p>
+              )}
+              {isLowBudget && (
+                <p className="text-amber-400">
+                  Este monto es bajo por variante — Meta podría no entregar el
+                  anuncio de forma óptima o rechazar el presupuesto mínimo
+                  permitido.
+                </p>
+              )}
+            </div>
             <Button
               type="button"
               fullWidth

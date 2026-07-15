@@ -70,7 +70,7 @@ export interface PublicarCampanaInput {
   presupuesto_total: number;
 }
 
-export const MIN_SELECTED_VARIANTS = 2;
+export const MIN_SELECTED_VARIANTS = 1;
 export const MAX_SELECTED_VARIANTS = 4;
 export const BUDGET_PER_VARIANT_SOLES = 20;
 
