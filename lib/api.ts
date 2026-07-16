@@ -306,6 +306,7 @@ export async function publishToMeta(
     campana_id: input.campana_id,
     variante_ids: input.variante_ids,
     presupuesto_total: input.presupuesto_total,
+    objetivo: input.objetivo,
   };
   debugLog("publishToMeta → payload", payload);
 

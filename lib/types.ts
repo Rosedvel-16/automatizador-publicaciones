@@ -64,11 +64,20 @@ export interface AdVariant {
 
 export interface GenerateVariantsRequest extends BriefInput, DraftReviewInput {}
 
+export type CampanaObjetivo =
+  | "difusion"
+  | "interaccion"
+  | "trafico"
+  | "conversion";
+
 export interface PublicarCampanaInput {
   campana_id: string;
   variante_ids: string[];
   presupuesto_total: number;
+  objetivo: CampanaObjetivo;
 }
+
+export const DEFAULT_CAMPANA_OBJETIVO: CampanaObjetivo = "trafico";
 
 export const MIN_SELECTED_VARIANTS = 1;
 export const MAX_SELECTED_VARIANTS = 4;

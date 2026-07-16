@@ -7,11 +7,14 @@ import {
   AdFormat,
   AdVariant,
   BUDGET_PER_VARIANT_SOLES,
+  CampanaObjetivo,
+  DEFAULT_CAMPANA_OBJETIVO,
   MAX_SELECTED_VARIANTS,
   MIN_SELECTED_VARIANTS,
 } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 import { ApiErrorState } from "@/components/ApiErrorState";
+import { CampaignObjectiveSelector } from "@/components/CampaignObjectiveSelector";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Toast } from "@/components/ui/Toast";
@@ -68,6 +71,9 @@ export function VariantGallery({
   const [publishError, setPublishError] = useState<string | null>(null);
   const [presupuestoTotal, setPresupuestoTotal] = useState("");
   const [presupuestoError, setPresupuestoError] = useState<string | null>(null);
+  const [objetivo, setObjetivo] = useState<CampanaObjetivo>(
+    DEFAULT_CAMPANA_OBJETIVO
+  );
 
   const maxSelectable = Math.min(MAX_SELECTED_VARIANTS, variants.length);
   const selectedCount = selectedVariantIds.length;
@@ -156,6 +162,7 @@ export function VariantGallery({
         campana_id: campanaId,
         variante_ids: selectedVariantIds,
         presupuesto_total: presupuestoValue,
+        objetivo,
       });
       onMetaPublished();
       setShowPublishToast(true);
@@ -312,7 +319,12 @@ export function VariantGallery({
           )}
 
           {hasMinSelection && variantConfirmed && (
-            <div className="mb-4 max-w-md mx-auto w-full flex flex-col gap-2">
+            <div className="mb-4 max-w-md mx-auto w-full flex flex-col gap-4">
+              <CampaignObjectiveSelector
+                value={objetivo}
+                onChange={setObjetivo}
+                disabled={isPublishing}
+              />
               <Input
                 label="Presupuesto diario total (S/)"
                 type="number"

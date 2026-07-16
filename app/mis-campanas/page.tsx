@@ -10,9 +10,15 @@ import {
 import Link from "next/link";
 import { Check, ChevronDown, Loader2 } from "lucide-react";
 import { listarCampanas, publishToMeta } from "@/lib/api";
-import { BUDGET_PER_VARIANT_SOLES, Campana } from "@/lib/types";
+import {
+  BUDGET_PER_VARIANT_SOLES,
+  Campana,
+  CampanaObjetivo,
+  DEFAULT_CAMPANA_OBJETIVO,
+} from "@/lib/types";
 import { formatCampanaDate, formatCurrency } from "@/lib/utils";
 import { AppHeader } from "@/components/AppHeader";
+import { CampaignObjectiveSelector } from "@/components/CampaignObjectiveSelector";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Toast } from "@/components/ui/Toast";
@@ -89,6 +95,9 @@ function CampaignCard({ campana, onCampanaUpdated }: CampaignCardProps) {
     String(BUDGET_PER_VARIANT_SOLES)
   );
   const [presupuestoError, setPresupuestoError] = useState<string | null>(null);
+  const [objetivo, setObjetivo] = useState<CampanaObjetivo>(
+    DEFAULT_CAMPANA_OBJETIVO
+  );
 
   const status = getStatusConfig(campana.status);
   const canPublish = Boolean(campana.variante_seleccionada_id);
@@ -139,6 +148,7 @@ function CampaignCard({ campana, onCampanaUpdated }: CampaignCardProps) {
         campana_id: campana.id,
         variante_ids: [campana.variante_seleccionada_id],
         presupuesto_total: presupuestoValue,
+        objetivo,
       });
 
       onCampanaUpdated({
@@ -243,6 +253,11 @@ function CampaignCard({ campana, onCampanaUpdated }: CampaignCardProps) {
             onClick={(event) => event.stopPropagation()}
             onKeyDown={(event) => event.stopPropagation()}
           >
+            <CampaignObjectiveSelector
+              value={objetivo}
+              onChange={setObjetivo}
+              disabled={isPublishing}
+            />
             <Input
               label="Presupuesto diario total (S/)"
               type="number"
