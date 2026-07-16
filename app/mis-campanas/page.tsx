@@ -191,6 +191,7 @@ function CampaignCard({ campana, onCampanaUpdated }: CampaignCardProps) {
       onKeyDown={handleKeyDown}
       className={[
         "flex flex-col gap-3 border border-neutral-800 bg-neutral-900/40 p-5",
+        "overflow-hidden min-w-0",
         "cursor-pointer transition-all duration-200 animate-fade-in",
         "hover:border-neutral-600 hover:bg-neutral-900/70",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow",
@@ -232,27 +233,43 @@ function CampaignCard({ campana, onCampanaUpdated }: CampaignCardProps) {
         {dolor}
       </p>
 
-      <div className="flex flex-col gap-2 mt-auto pt-1">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-          <p className="text-xs text-neutral-500">
-            {formatCampanaDate(campana.created_at)}
-          </p>
-          {metaAdsManagerUrl && (
-            <a
-              href={metaAdsManagerUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(event) => event.stopPropagation()}
-              className={[
-                "inline-flex items-center justify-center gap-2 px-3 py-1.5 text-[11px] font-semibold",
-                "border border-neutral-700 text-neutral-300 bg-transparent",
-                "transition-colors duration-200 hover:border-neutral-500 hover:text-brand-white",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500",
-              ].join(" ")}
-            >
-              Ver en Meta Ads Manager
-            </a>
-          )}
+      <div className="flex flex-col gap-2 mt-auto pt-1 min-w-0">
+        <div className="flex flex-col gap-2 min-w-0">
+          <div className="flex flex-col gap-2 min-w-0">
+            <p className="text-xs text-neutral-500">
+              {formatCampanaDate(campana.created_at)}
+            </p>
+            {metaAdsManagerUrl && (
+              <a
+                href={metaAdsManagerUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(event) => event.stopPropagation()}
+                className={[
+                  "inline-flex w-fit max-w-full items-center justify-center gap-2 px-3 py-1.5 text-[11px] font-semibold",
+                  "border border-neutral-700 text-neutral-300 bg-transparent",
+                  "transition-colors duration-200 hover:border-neutral-500 hover:text-brand-white",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500",
+                ].join(" ")}
+              >
+                Ver en Meta Ads Manager
+              </a>
+            )}
+            {showPerformanceBlock && (
+              <p className="text-[11px] leading-relaxed text-neutral-500 break-words">
+                {hasPerformanceData && metricas ? (
+                  <>
+                    👁 {formatCompactNumber(metricas.impresiones)} impresiones ·
+                    🖱 {formatCompactNumber(metricas.clics)} clics · CTR{" "}
+                    {formatCtr(metricas.ctr)} · 💰{" "}
+                    {formatCurrency(metricas.gasto)} gastados
+                  </>
+                ) : (
+                  "Sin datos de rendimiento aún"
+                )}
+              </p>
+            )}
+          </div>
         </div>
 
         {showMetaPublished && (
@@ -262,31 +279,16 @@ function CampaignCard({ campana, onCampanaUpdated }: CampaignCardProps) {
           </p>
         )}
 
-        {showPerformanceBlock && (
-          <p className="text-[11px] leading-relaxed text-neutral-500">
-            {hasPerformanceData && metricas ? (
-              <>
-                👁 {formatCompactNumber(metricas.impresiones)} impresiones · 🖱{" "}
-                {formatCompactNumber(metricas.clics)} clics · CTR{" "}
-                {formatCtr(metricas.ctr)} · 💰 {formatCurrency(metricas.gasto)}{" "}
-                gastados
-              </>
-            ) : (
-              "Sin datos de rendimiento aún"
-            )}
-          </p>
-        )}
-
         {showVariantesBreakdown && (
-          <div className="flex flex-col gap-2 pt-1 border-t border-neutral-800">
+          <div className="flex flex-col gap-2 pt-1 border-t border-neutral-800 min-w-0">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
               Rendimiento por variante
             </p>
-            <ul className="flex flex-col gap-2">
+            <ul className="flex flex-col gap-2 min-w-0">
               {variantesPublicadas.map((variante) => (
                 <li
                   key={variante.id}
-                  className="flex items-start gap-2.5 text-[11px] text-neutral-400"
+                  className="flex items-start gap-2.5 text-[11px] text-neutral-400 min-w-0"
                 >
                   {variante.image_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -298,7 +300,7 @@ function CampaignCard({ campana, onCampanaUpdated }: CampaignCardProps) {
                   ) : (
                     <span className="w-8 h-8 border border-neutral-800 bg-neutral-900 shrink-0" />
                   )}
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 overflow-hidden">
                     <p className="text-neutral-300 leading-snug break-words">
                       {normalizeInlineText(variante.titulo)}
                     </p>
@@ -316,7 +318,7 @@ function CampaignCard({ campana, onCampanaUpdated }: CampaignCardProps) {
 
         {canPublish && (
           <div
-            className="flex flex-col gap-4 pt-2"
+            className="flex flex-col gap-4 pt-2 min-w-0 w-full"
             onClick={(event) => event.stopPropagation()}
             onKeyDown={(event) => event.stopPropagation()}
           >
@@ -324,6 +326,7 @@ function CampaignCard({ campana, onCampanaUpdated }: CampaignCardProps) {
               value={objetivo}
               onChange={setObjetivo}
               disabled={isPublishing}
+              compact
             />
             <Input
               label="Presupuesto diario total (S/)"
@@ -481,11 +484,12 @@ export default function MisCampanasPage() {
         {!isLoading && !error && campanas.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {campanas.map((campana) => (
-              <CampaignCard
-                key={campana.id}
-                campana={campana}
-                onCampanaUpdated={handleCampanaUpdated}
-              />
+              <div key={campana.id} className="min-w-0">
+                <CampaignCard
+                  campana={campana}
+                  onCampanaUpdated={handleCampanaUpdated}
+                />
+              </div>
             ))}
           </div>
         )}

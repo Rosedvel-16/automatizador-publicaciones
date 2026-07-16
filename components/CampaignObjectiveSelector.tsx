@@ -39,20 +39,26 @@ interface CampaignObjectiveSelectorProps {
   value: CampanaObjetivo;
   onChange: (value: CampanaObjetivo) => void;
   disabled?: boolean;
+  /** Una columna: evita desbordes en tarjetas angostas (Mis campañas). */
+  compact?: boolean;
 }
 
 export function CampaignObjectiveSelector({
   value,
   onChange,
   disabled = false,
+  compact = false,
 }: CampaignObjectiveSelectorProps) {
   return (
-    <div className="flex flex-col gap-3">
+    <div className="w-full min-w-0 flex flex-col gap-3">
       <p className="text-sm font-medium text-brand-white">
         Objetivo de campaña
       </p>
       <div
-        className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+        className={[
+          "grid gap-2 w-full min-w-0",
+          compact ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2",
+        ].join(" ")}
         role="radiogroup"
         aria-label="Objetivo de campaña"
       >
@@ -73,20 +79,21 @@ export function CampaignObjectiveSelector({
                 if (!isDisabled) onChange(option.value);
               }}
               className={[
-                "relative flex flex-col items-start gap-1.5 px-3.5 py-3 text-left",
-                "rounded-sm border bg-brand-black transition-colors",
+                "w-full min-w-0 max-w-full overflow-hidden",
+                "flex flex-col items-start gap-1 px-3 py-2.5 text-left",
+                "border bg-neutral-950 transition-colors",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow focus-visible:ring-offset-2 focus-visible:ring-offset-brand-black",
                 option.disabled
-                  ? "border-neutral-800 text-neutral-600 opacity-60 cursor-not-allowed"
+                  ? "border-neutral-800 opacity-55 cursor-not-allowed"
                   : isSelected
-                    ? "border-brand-yellow ring-1 ring-brand-yellow/40"
+                    ? "border-brand-yellow"
                     : "border-neutral-700 hover:border-neutral-500",
               ].join(" ")}
             >
-              <span className="inline-flex flex-wrap items-center gap-2">
+              <span className="w-full min-w-0 flex flex-col items-start gap-1">
                 <span
                   className={[
-                    "text-sm font-semibold",
+                    "text-sm font-semibold break-words",
                     option.disabled
                       ? "text-neutral-500"
                       : isSelected
@@ -97,14 +104,14 @@ export function CampaignObjectiveSelector({
                   {option.label}
                 </span>
                 {option.badge && (
-                  <span className="text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 border border-neutral-700 text-neutral-500">
+                  <span className="inline-block max-w-full text-[9px] uppercase tracking-wider font-semibold px-1.5 py-0.5 border border-neutral-700 text-neutral-500 truncate">
                     {option.badge}
                   </span>
                 )}
               </span>
               <span
                 className={[
-                  "text-[11px] leading-relaxed",
+                  "w-full text-[11px] leading-relaxed break-words",
                   option.disabled ? "text-neutral-600" : "text-neutral-500",
                 ].join(" ")}
               >
