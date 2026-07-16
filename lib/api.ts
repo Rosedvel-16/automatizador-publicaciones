@@ -262,8 +262,8 @@ const PUBLISH_META_TIMEOUT_MESSAGE =
 
 export interface PublishToMetaResponse {
   meta_campaign_id: string;
-  meta_adset_id: string;
-  meta_ad_id: string;
+  meta_adset_id?: string | null;
+  meta_ad_id?: string | null;
 }
 
 function validatePublishToMetaResponse(data: unknown): PublishToMetaResponse {
@@ -275,15 +275,26 @@ function validatePublishToMetaResponse(data: unknown): PublishToMetaResponse {
   }
 
   const record = data as Record<string, unknown>;
-  const { meta_campaign_id, meta_adset_id, meta_ad_id } = record;
 
-  if (
-    !isNonEmptyString(meta_campaign_id) ||
-    !isNonEmptyString(meta_adset_id) ||
-    !isNonEmptyString(meta_ad_id)
-  ) {
+  if (record.success === false) {
+    console.error("[api] publishToMeta — success:false en la respuesta:", data);
+    const errorMessage =
+      typeof record.error === "string" && record.error.trim()
+        ? record.error
+        : "No se pudo publicar la campaña en Meta Ads";
+    throw new Error(errorMessage);
+  }
+
+  if (typeof record.error === "string" && record.error.trim()) {
+    console.error("[api] publishToMeta — error en la respuesta:", data);
+    throw new Error(record.error);
+  }
+
+  const { meta_campaign_id } = record;
+
+  if (!isNonEmptyString(meta_campaign_id)) {
     console.error(
-      "[api] publishToMeta — faltan IDs de Meta en la respuesta:",
+      "[api] publishToMeta — falta meta_campaign_id en la respuesta:",
       data
     );
     throw new Error(
@@ -293,8 +304,10 @@ function validatePublishToMetaResponse(data: unknown): PublishToMetaResponse {
 
   return {
     meta_campaign_id,
-    meta_adset_id,
-    meta_ad_id,
+    meta_adset_id:
+      typeof record.meta_adset_id === "string" ? record.meta_adset_id : null,
+    meta_ad_id:
+      typeof record.meta_ad_id === "string" ? record.meta_ad_id : null,
   };
 }
 

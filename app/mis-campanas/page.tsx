@@ -101,8 +101,7 @@ function CampaignCard({ campana, onCampanaUpdated }: CampaignCardProps) {
 
   const status = getStatusConfig(campana.status);
   const canPublish = Boolean(campana.variante_seleccionada_id);
-  const showMetaPublished =
-    campana.status === "publicada" && Boolean(campana.meta_ad_id);
+  const showMetaPublished = Boolean(campana.meta_campaign_id);
   const metaAdsManagerUrl = campana.meta_campaign_id
     ? `https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=1576952164432427&selected_campaign_ids=${campana.meta_campaign_id}`
     : null;
@@ -155,8 +154,8 @@ function CampaignCard({ campana, onCampanaUpdated }: CampaignCardProps) {
         ...campana,
         status: "publicada",
         meta_campaign_id: result.meta_campaign_id,
-        meta_adset_id: result.meta_adset_id,
-        meta_ad_id: result.meta_ad_id,
+        meta_adset_id: result.meta_adset_id ?? campana.meta_adset_id,
+        meta_ad_id: result.meta_ad_id ?? campana.meta_ad_id,
         published_at: new Date().toISOString(),
       });
       setShowPublishToast(true);
