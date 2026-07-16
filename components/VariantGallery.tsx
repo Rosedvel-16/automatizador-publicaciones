@@ -302,16 +302,16 @@ export function VariantGallery({
       )}
 
       {!metaPublished && (
-        <div className="sticky bottom-0 pt-4 pb-2 bg-gradient-to-t from-brand-black via-brand-black to-transparent">
+        <div className="flex flex-col gap-6 mt-2 pt-6 border-t border-neutral-800">
           {!hasMinSelection && (
-            <p className="mb-3 text-center text-sm text-neutral-400">
+            <p className="text-center text-sm text-neutral-400">
               Selecciona al menos {MIN_SELECTED_VARIANTS} variante para publicar
               {selectedCount > 0 ? ` (${selectedCount} de ${maxSelectable})` : ""}
             </p>
           )}
 
           {hasMinSelection && !variantConfirmed && (
-            <p className="mb-3 text-center text-sm text-neutral-400">
+            <p className="text-center text-sm text-neutral-400">
               {selectedCount === 1
                 ? "1 variante seleccionada"
                 : `${selectedCount} variantes seleccionadas`}
@@ -319,93 +319,94 @@ export function VariantGallery({
           )}
 
           {hasMinSelection && variantConfirmed && (
-            <div className="mb-4 max-w-md mx-auto w-full flex flex-col gap-4">
+            <div className="w-full max-w-xl mx-auto flex flex-col gap-6">
               <CampaignObjectiveSelector
                 value={objetivo}
                 onChange={setObjetivo}
                 disabled={isPublishing}
               />
-              <Input
-                label="Presupuesto diario total (S/)"
-                type="number"
-                min={0}
-                step="1"
-                prefix="S/"
-                value={presupuestoTotal}
-                onChange={(e) => {
-                  setPresupuestoTotal(e.target.value);
-                  setPresupuestoError(null);
-                }}
-                error={presupuestoError ?? undefined}
-                disabled={isPublishing}
-              />
-              <div className="flex flex-col gap-1.5 text-xs leading-relaxed">
-                <p className="text-neutral-500">
-                  Sugerido: al menos {formatCurrency(minPresupuesto)}/día para
-                  que Meta pueda entregar bien{" "}
-                  {selectedCount === 1
-                    ? "el anuncio"
-                    : "cada anuncio"}
-                  .
-                </p>
-                {hasValidPresupuesto && selectedCount > 0 && (
-                  <p className="text-neutral-400">
-                    {selectedCount === 1
-                      ? `Con ${formatCurrency(presupuestoValue)} para 1 variante, tendrá un presupuesto diario de ${formatCurrency(presupuestoPorVariante!)}.`
-                      : `Con ${formatCurrency(presupuestoValue)} repartidos entre ${selectedCount} variantes, cada una tendrá un presupuesto diario de ${formatCurrency(presupuestoPorVariante!)}.`}
+              <div className="flex flex-col gap-2">
+                <Input
+                  label="Presupuesto diario total (S/)"
+                  type="number"
+                  min={0}
+                  step="1"
+                  prefix="S/"
+                  value={presupuestoTotal}
+                  onChange={(e) => {
+                    setPresupuestoTotal(e.target.value);
+                    setPresupuestoError(null);
+                  }}
+                  error={presupuestoError ?? undefined}
+                  disabled={isPublishing}
+                />
+                <div className="flex flex-col gap-1.5 text-xs leading-relaxed">
+                  <p className="text-neutral-500">
+                    Sugerido: al menos {formatCurrency(minPresupuesto)}/día para
+                    que Meta pueda entregar bien{" "}
+                    {selectedCount === 1 ? "el anuncio" : "cada anuncio"}.
                   </p>
-                )}
-                {isLowBudgetPerVariant && (
-                  <p className="text-amber-400">
-                    Este monto es bajo por variante — Meta podría no entregar el
-                    anuncio de forma óptima o rechazar el presupuesto mínimo
-                    permitido.
-                  </p>
-                )}
+                  {hasValidPresupuesto && selectedCount > 0 && (
+                    <p className="text-neutral-400">
+                      {selectedCount === 1
+                        ? `Con ${formatCurrency(presupuestoValue)} para 1 variante, tendrá un presupuesto diario de ${formatCurrency(presupuestoPorVariante!)}.`
+                        : `Con ${formatCurrency(presupuestoValue)} repartidos entre ${selectedCount} variantes, cada una tendrá un presupuesto diario de ${formatCurrency(presupuestoPorVariante!)}.`}
+                    </p>
+                  )}
+                  {isLowBudgetPerVariant && (
+                    <p className="text-amber-400">
+                      Este monto es bajo por variante — Meta podría no entregar
+                      el anuncio de forma óptima o rechazar el presupuesto
+                      mínimo permitido.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           )}
 
-          {!variantConfirmed ? (
-            <Button
-              type="button"
-              fullWidth
-              onClick={handleConfirm}
-              disabled={!hasMinSelection || isConfirming || !campanaId}
-            >
-              {isConfirming ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Enviando...
-                </>
-              ) : (
-                "Confirmar y continuar"
-              )}
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              fullWidth
-              onClick={handlePublishToMeta}
-              disabled={
-                !hasMinSelection ||
-                !hasValidPresupuesto ||
-                isPublishing ||
-                !campanaId
-              }
-            >
-              {isPublishing ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Publicando...
-                </>
-              ) : (
-                `Publicar ${selectedCount} ${
-                  selectedCount === 1 ? "variante" : "variantes"
-                } en Meta Ads`
-              )}
-            </Button>
-          )}
+          <div className="sticky bottom-0 pt-3 pb-2 bg-gradient-to-t from-brand-black via-brand-black to-transparent">
+            {!variantConfirmed ? (
+              <Button
+                type="button"
+                fullWidth
+                onClick={handleConfirm}
+                disabled={!hasMinSelection || isConfirming || !campanaId}
+              >
+                {isConfirming ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  "Confirmar y continuar"
+                )}
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                fullWidth
+                onClick={handlePublishToMeta}
+                disabled={
+                  !hasMinSelection ||
+                  !hasValidPresupuesto ||
+                  isPublishing ||
+                  !campanaId
+                }
+              >
+                {isPublishing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Publicando...
+                  </>
+                ) : (
+                  `Publicar ${selectedCount} ${
+                    selectedCount === 1 ? "variante" : "variantes"
+                  } en Meta Ads`
+                )}
+              </Button>
+            )}
+          </div>
         </div>
       )}
 

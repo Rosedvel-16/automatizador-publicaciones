@@ -7,8 +7,10 @@ import {
   DraftReviewInput,
   GenerateVariantsRequest,
   MAX_NUM_VARIANTES,
+  MetricasTotales,
   MIN_NUM_VARIANTES,
   PublicarCampanaInput,
+  VariantePublicada,
 } from "./types";
 
 const TIMEOUT_INVESTIGATE_MS = 90_000;
@@ -388,6 +390,87 @@ const CAMPANA_KEYS: (keyof Campana)[] = [
   "variante_image_url",
 ];
 
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function parseMetricasTotales(
+  value: unknown,
+  campanaIndex: number
+): MetricasTotales | null {
+  if (value === null || value === undefined) return null;
+  if (!value || typeof value !== "object") {
+    throw new Error(
+      `La campaña ${campanaIndex + 1} tiene un valor inválido en metricas_totales.`
+    );
+  }
+
+  const record = value as Record<string, unknown>;
+  const keys = ["impresiones", "clics", "gasto", "ctr"] as const;
+
+  for (const key of keys) {
+    if (!isFiniteNumber(record[key])) {
+      throw new Error(
+        `La campaña ${campanaIndex + 1} tiene un valor inválido en metricas_totales.${key}.`
+      );
+    }
+  }
+
+  return {
+    impresiones: record.impresiones as number,
+    clics: record.clics as number,
+    gasto: record.gasto as number,
+    ctr: record.ctr as number,
+  };
+}
+
+function parseVariantesPublicadas(
+  value: unknown,
+  campanaIndex: number
+): VariantePublicada[] {
+  if (value === null || value === undefined) return [];
+  if (!Array.isArray(value)) {
+    throw new Error(
+      `La campaña ${campanaIndex + 1} tiene un valor inválido en variantes_publicadas.`
+    );
+  }
+
+  return value.map((item, variantIndex) => {
+    if (!item || typeof item !== "object") {
+      throw new Error(
+        `La campaña ${campanaIndex + 1} tiene una variante publicada inválida (#${variantIndex + 1}).`
+      );
+    }
+
+    const record = item as Record<string, unknown>;
+
+    if (!isNonEmptyString(record.id) || !isNonEmptyString(record.titulo)) {
+      throw new Error(
+        `La campaña ${campanaIndex + 1} tiene una variante publicada incompleta (#${variantIndex + 1}).`
+      );
+    }
+
+    if (
+      !isFiniteNumber(record.impresiones) ||
+      !isFiniteNumber(record.clics) ||
+      !isFiniteNumber(record.gasto)
+    ) {
+      throw new Error(
+        `La campaña ${campanaIndex + 1} tiene métricas inválidas en la variante #${variantIndex + 1}.`
+      );
+    }
+
+    return {
+      id: record.id,
+      titulo: record.titulo,
+      image_url: isNonEmptyString(record.image_url) ? record.image_url : "",
+      impresiones: record.impresiones,
+      clics: record.clics,
+      gasto: record.gasto,
+    };
+  });
+}
+
 function validateCampanas(data: unknown): Campana[] {
   if (!Array.isArray(data)) {
     throw new Error(
@@ -457,6 +540,11 @@ function validateCampanas(data: unknown): Campana[] {
       variante_seleccionada_id: record.variante_seleccionada_id as string | null,
       variante_titulo: record.variante_titulo as string | null,
       variante_image_url: record.variante_image_url as string | null,
+      metricas_totales: parseMetricasTotales(record.metricas_totales, index),
+      variantes_publicadas: parseVariantesPublicadas(
+        record.variantes_publicadas,
+        index
+      ),
     };
   });
 }

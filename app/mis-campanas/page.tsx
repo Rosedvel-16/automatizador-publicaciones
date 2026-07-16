@@ -86,6 +86,16 @@ interface CampaignCardProps {
   onCampanaUpdated: (campana: Campana) => void;
 }
 
+function formatCompactNumber(value: number): string {
+  return new Intl.NumberFormat("es-PE", {
+    maximumFractionDigits: value % 1 === 0 ? 0 : 2,
+  }).format(value);
+}
+
+function formatCtr(value: number): string {
+  return `${formatCompactNumber(value)}%`;
+}
+
 function CampaignCard({ campana, onCampanaUpdated }: CampaignCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -113,6 +123,12 @@ function CampaignCard({ campana, onCampanaUpdated }: CampaignCardProps) {
     !Number.isNaN(presupuestoValue) && presupuestoValue > 0;
   const isLowBudget =
     hasValidPresupuesto && presupuestoValue < BUDGET_PER_VARIANT_SOLES;
+  const metricas = campana.metricas_totales;
+  const hasPerformanceData = Boolean(metricas && metricas.impresiones > 0);
+  const showPerformanceBlock = showMetaPublished;
+  const variantesPublicadas = campana.variantes_publicadas ?? [];
+  const showVariantesBreakdown =
+    isExpanded && variantesPublicadas.length > 1;
 
   function toggleExpanded() {
     setIsExpanded((prev) => !prev);
@@ -246,9 +262,61 @@ function CampaignCard({ campana, onCampanaUpdated }: CampaignCardProps) {
           </p>
         )}
 
+        {showPerformanceBlock && (
+          <p className="text-[11px] leading-relaxed text-neutral-500">
+            {hasPerformanceData && metricas ? (
+              <>
+                👁 {formatCompactNumber(metricas.impresiones)} impresiones · 🖱{" "}
+                {formatCompactNumber(metricas.clics)} clics · CTR{" "}
+                {formatCtr(metricas.ctr)} · 💰 {formatCurrency(metricas.gasto)}{" "}
+                gastados
+              </>
+            ) : (
+              "Sin datos de rendimiento aún"
+            )}
+          </p>
+        )}
+
+        {showVariantesBreakdown && (
+          <div className="flex flex-col gap-2 pt-1 border-t border-neutral-800">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
+              Rendimiento por variante
+            </p>
+            <ul className="flex flex-col gap-2">
+              {variantesPublicadas.map((variante) => (
+                <li
+                  key={variante.id}
+                  className="flex items-start gap-2.5 text-[11px] text-neutral-400"
+                >
+                  {variante.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={variante.image_url}
+                      alt=""
+                      className="w-8 h-8 object-cover border border-neutral-800 shrink-0 bg-neutral-900"
+                    />
+                  ) : (
+                    <span className="w-8 h-8 border border-neutral-800 bg-neutral-900 shrink-0" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-neutral-300 leading-snug break-words">
+                      {normalizeInlineText(variante.titulo)}
+                    </p>
+                    <p className="text-neutral-500 mt-0.5">
+                      {formatCompactNumber(variante.impresiones)} imp. ·{" "}
+                      {formatCompactNumber(variante.clics)} clics ·{" "}
+                      {formatCurrency(variante.gasto)}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {canPublish && (
           <div
-            className="flex flex-col gap-2 pt-1"
+            className="flex flex-col gap-4 pt-2"
             onClick={(event) => event.stopPropagation()}
             onKeyDown={(event) => event.stopPropagation()}
           >

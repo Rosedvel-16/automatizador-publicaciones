@@ -83,6 +83,22 @@ export const MIN_SELECTED_VARIANTS = 1;
 export const MAX_SELECTED_VARIANTS = 4;
 export const BUDGET_PER_VARIANT_SOLES = 20;
 
+export interface MetricasTotales {
+  impresiones: number;
+  clics: number;
+  gasto: number;
+  ctr: number;
+}
+
+export interface VariantePublicada {
+  id: string;
+  titulo: string;
+  image_url: string;
+  impresiones: number;
+  clics: number;
+  gasto: number;
+}
+
 export interface Campana {
   id: string;
   avatar_cliente: string;
@@ -99,6 +115,8 @@ export interface Campana {
   variante_seleccionada_id: string | null;
   variante_titulo: string | null;
   variante_image_url: string | null;
+  metricas_totales: MetricasTotales | null;
+  variantes_publicadas: VariantePublicada[];
 }
 
 export const AD_FORMAT_LABELS: Record<AdFormat, string> = {

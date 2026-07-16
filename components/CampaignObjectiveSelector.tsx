@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  CampanaObjetivo,
-  DEFAULT_CAMPANA_OBJETIVO,
-} from "@/lib/types";
+import { CampanaObjetivo } from "@/lib/types";
 
 interface ObjectiveOption {
   value: CampanaObjetivo;
@@ -50,11 +47,15 @@ export function CampaignObjectiveSelector({
   disabled = false,
 }: CampaignObjectiveSelectorProps) {
   return (
-    <fieldset className="flex flex-col gap-2" disabled={disabled}>
-      <legend className="text-sm font-medium text-brand-white mb-1">
+    <div className="flex flex-col gap-3">
+      <p className="text-sm font-medium text-brand-white">
         Objetivo de campaña
-      </legend>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2" role="radiogroup">
+      </p>
+      <div
+        className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+        role="radiogroup"
+        aria-label="Objetivo de campaña"
+      >
         {OBJECTIVE_OPTIONS.map((option) => {
           const isSelected = value === option.value;
           const isDisabled = disabled || Boolean(option.disabled);
@@ -72,16 +73,17 @@ export function CampaignObjectiveSelector({
                 if (!isDisabled) onChange(option.value);
               }}
               className={[
-                "flex flex-col items-start gap-1 px-3 py-2.5 border text-left transition-colors",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow",
+                "relative flex flex-col items-start gap-1.5 px-3.5 py-3 text-left",
+                "rounded-sm border bg-brand-black transition-colors",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow focus-visible:ring-offset-2 focus-visible:ring-offset-brand-black",
                 option.disabled
-                  ? "border-neutral-800 bg-neutral-950/40 opacity-50 cursor-not-allowed"
+                  ? "border-neutral-800 text-neutral-600 opacity-60 cursor-not-allowed"
                   : isSelected
-                    ? "border-brand-yellow bg-brand-yellow/5"
-                    : "border-neutral-700 bg-neutral-900/50 hover:border-neutral-500",
+                    ? "border-brand-yellow ring-1 ring-brand-yellow/40"
+                    : "border-neutral-700 hover:border-neutral-500",
               ].join(" ")}
             >
-              <span className="inline-flex items-center gap-2">
+              <span className="inline-flex flex-wrap items-center gap-2">
                 <span
                   className={[
                     "text-sm font-semibold",
@@ -100,15 +102,18 @@ export function CampaignObjectiveSelector({
                   </span>
                 )}
               </span>
-              <span className="text-[11px] leading-relaxed text-neutral-500">
+              <span
+                className={[
+                  "text-[11px] leading-relaxed",
+                  option.disabled ? "text-neutral-600" : "text-neutral-500",
+                ].join(" ")}
+              >
                 {option.help}
               </span>
             </button>
           );
         })}
       </div>
-    </fieldset>
+    </div>
   );
 }
-
-export { DEFAULT_CAMPANA_OBJETIVO };
