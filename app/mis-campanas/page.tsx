@@ -59,20 +59,28 @@ function getErrorMessage(error: unknown): string {
 
 function CampaignCardSkeleton() {
   return (
-    <div className="flex flex-col gap-4 border border-neutral-800 bg-neutral-900/40 p-5 animate-pulse">
-      <div className="flex items-center justify-between gap-3">
-        <div className="h-6 bg-neutral-800 rounded w-28" />
-        <div className="h-4 w-4 bg-neutral-800 rounded shrink-0" />
+    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 border border-neutral-800 bg-neutral-900/40 p-5 animate-pulse">
+      <div className="flex-1 min-w-0 flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="h-6 bg-neutral-800 rounded w-28" />
+          <div className="h-4 w-4 bg-neutral-800 rounded shrink-0" />
+        </div>
+        <div className="space-y-2">
+          <div className="h-4 bg-neutral-800 rounded w-full" />
+          <div className="h-4 bg-neutral-800 rounded w-4/5" />
+        </div>
+        <div className="h-3 bg-neutral-800 rounded w-32" />
       </div>
-      <div className="space-y-2">
-        <div className="h-4 bg-neutral-800 rounded w-full" />
-        <div className="h-4 bg-neutral-800 rounded w-4/5" />
+      <div className="lg:w-[420px] shrink-0 flex flex-col gap-3 border-t lg:border-t-0 lg:border-l border-neutral-800 pt-4 lg:pt-0 lg:pl-6">
+        <div className="h-4 bg-neutral-800 rounded w-40" />
+        <div className="grid grid-cols-2 gap-2">
+          <div className="h-16 bg-neutral-800 rounded" />
+          <div className="h-16 bg-neutral-800 rounded" />
+          <div className="h-16 bg-neutral-800 rounded" />
+          <div className="h-16 bg-neutral-800 rounded" />
+        </div>
+        <div className="h-10 bg-neutral-800 rounded w-full" />
       </div>
-      <div className="space-y-2">
-        <div className="h-4 bg-neutral-800 rounded w-full" />
-        <div className="h-4 bg-neutral-800 rounded w-3/4" />
-      </div>
-      <div className="h-3 bg-neutral-800 rounded w-32" />
     </div>
   );
 }
@@ -190,55 +198,62 @@ function CampaignCard({ campana, onCampanaUpdated }: CampaignCardProps) {
       onClick={toggleExpanded}
       onKeyDown={handleKeyDown}
       className={[
-        "flex flex-col gap-3 border border-neutral-800 bg-neutral-900/40 p-5",
+        "flex flex-col lg:flex-row lg:items-stretch gap-4 lg:gap-0",
+        "border border-neutral-800 bg-neutral-900/40 p-5 lg:p-0",
         "overflow-hidden min-w-0",
         "cursor-pointer transition-all duration-200 animate-fade-in",
         "hover:border-neutral-600 hover:bg-neutral-900/70",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow",
       ].join(" ")}
     >
-      <div className="flex items-center justify-between gap-3">
-        <span
+      <div className="flex flex-col gap-3 flex-1 min-w-0 lg:p-5">
+        <div className="flex items-center justify-between gap-3">
+          <span
+            className={[
+              "inline-flex max-w-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wider border",
+              status.className,
+            ].join(" ")}
+          >
+            {status.label}
+          </span>
+          <ChevronDown
+            className={[
+              "w-4 h-4 shrink-0 text-neutral-500 transition-transform duration-200",
+              isExpanded ? "rotate-180" : "",
+            ].join(" ")}
+            aria-hidden
+          />
+        </div>
+
+        <h2
           className={[
-            "inline-flex max-w-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wider border",
-            status.className,
+            "w-full text-sm lg:text-base font-semibold text-brand-white leading-relaxed break-words",
+            !isExpanded && "line-clamp-2",
           ].join(" ")}
         >
-          {status.label}
-        </span>
-        <ChevronDown
+          {titulo}
+        </h2>
+
+        <p
           className={[
-            "w-4 h-4 shrink-0 text-neutral-500 transition-transform duration-200",
-            isExpanded ? "rotate-180" : "",
+            "w-full text-sm text-neutral-400 leading-relaxed break-words",
+            !isExpanded && "line-clamp-2 lg:line-clamp-3",
           ].join(" ")}
-          aria-hidden
-        />
-      </div>
+        >
+          {dolor}
+        </p>
 
-      <h2
-        className={[
-          "w-full text-sm font-semibold text-brand-white leading-relaxed break-words",
-          !isExpanded && "line-clamp-2",
-        ].join(" ")}
-      >
-        {titulo}
-      </h2>
-
-      <p
-        className={[
-          "w-full text-sm text-neutral-400 leading-relaxed break-words",
-          !isExpanded && "line-clamp-2",
-        ].join(" ")}
-      >
-        {dolor}
-      </p>
-
-      <div className="flex flex-col gap-2 mt-auto pt-1 min-w-0">
-        <div className="flex flex-col gap-2 min-w-0">
-          <div className="flex flex-col gap-2 min-w-0">
+        <div className="flex flex-col gap-2 mt-auto pt-1 min-w-0">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-x-4 sm:gap-y-2 min-w-0">
             <p className="text-xs text-neutral-500">
               {formatCampanaDate(campana.created_at)}
             </p>
+            {showMetaPublished && (
+              <p className="inline-flex items-center gap-1.5 text-xs text-brand-white">
+                <Check className="w-3.5 h-3.5 text-brand-yellow shrink-0" />
+                Publicado en Meta Ads
+              </p>
+            )}
             {metaAdsManagerUrl && (
               <a
                 href={metaAdsManagerUrl}
@@ -255,79 +270,80 @@ function CampaignCard({ campana, onCampanaUpdated }: CampaignCardProps) {
                 Ver en Meta Ads Manager
               </a>
             )}
-            {showPerformanceBlock && (
-              <p className="text-[11px] leading-relaxed text-neutral-500 break-words">
-                {hasPerformanceData && metricas ? (
-                  <>
-                    👁 {formatCompactNumber(metricas.impresiones)} impresiones ·
-                    🖱 {formatCompactNumber(metricas.clics)} clics · CTR{" "}
-                    {formatCtr(metricas.ctr)} · 💰{" "}
-                    {formatCurrency(metricas.gasto)} gastados
-                  </>
-                ) : (
-                  "Sin datos de rendimiento aún"
-                )}
-              </p>
-            )}
           </div>
-        </div>
 
-        {showMetaPublished && (
-          <p className="inline-flex items-center gap-1.5 text-xs text-brand-white">
-            <Check className="w-3.5 h-3.5 text-brand-yellow shrink-0" />
-            Publicado en Meta Ads
-          </p>
-        )}
-
-        {showVariantesBreakdown && (
-          <div className="flex flex-col gap-2 pt-1 border-t border-neutral-800 min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
-              Rendimiento por variante
+          {showPerformanceBlock && (
+            <p className="text-[11px] leading-relaxed text-neutral-500 break-words">
+              {hasPerformanceData && metricas ? (
+                <>
+                  👁 {formatCompactNumber(metricas.impresiones)} impresiones ·
+                  🖱 {formatCompactNumber(metricas.clics)} clics · CTR{" "}
+                  {formatCtr(metricas.ctr)} · 💰{" "}
+                  {formatCurrency(metricas.gasto)} gastados
+                </>
+              ) : (
+                "Sin datos de rendimiento aún"
+              )}
             </p>
-            <ul className="flex flex-col gap-2 min-w-0">
-              {variantesPublicadas.map((variante) => (
-                <li
-                  key={variante.id}
-                  className="flex items-start gap-2.5 text-[11px] text-neutral-400 min-w-0"
-                >
-                  {variante.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={variante.image_url}
-                      alt=""
-                      className="w-8 h-8 object-cover border border-neutral-800 shrink-0 bg-neutral-900"
-                    />
-                  ) : (
-                    <span className="w-8 h-8 border border-neutral-800 bg-neutral-900 shrink-0" />
-                  )}
-                  <div className="min-w-0 flex-1 overflow-hidden">
-                    <p className="text-neutral-300 leading-snug break-words">
-                      {normalizeInlineText(variante.titulo)}
-                    </p>
-                    <p className="text-neutral-500 mt-0.5">
-                      {formatCompactNumber(variante.impresiones)} imp. ·{" "}
-                      {formatCompactNumber(variante.clics)} clics ·{" "}
-                      {formatCurrency(variante.gasto)}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+          )}
 
-        {canPublish && (
-          <div
-            className="flex flex-col gap-4 pt-2 min-w-0 w-full"
-            onClick={(event) => event.stopPropagation()}
-            onKeyDown={(event) => event.stopPropagation()}
-          >
-            <CampaignObjectiveSelector
-              value={objetivo}
-              onChange={setObjetivo}
-              disabled={isPublishing}
-              compact
-            />
+          {showVariantesBreakdown && (
+            <div className="flex flex-col gap-2 pt-2 border-t border-neutral-800 min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
+                Rendimiento por variante
+              </p>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 min-w-0">
+                {variantesPublicadas.map((variante) => (
+                  <li
+                    key={variante.id}
+                    className="flex items-start gap-2.5 text-[11px] text-neutral-400 min-w-0"
+                  >
+                    {variante.image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={variante.image_url}
+                        alt=""
+                        className="w-8 h-8 object-cover border border-neutral-800 shrink-0 bg-neutral-900"
+                      />
+                    ) : (
+                      <span className="w-8 h-8 border border-neutral-800 bg-neutral-900 shrink-0" />
+                    )}
+                    <div className="min-w-0 flex-1 overflow-hidden">
+                      <p className="text-neutral-300 leading-snug break-words">
+                        {normalizeInlineText(variante.titulo)}
+                      </p>
+                      <p className="text-neutral-500 mt-0.5">
+                        {formatCompactNumber(variante.impresiones)} imp. ·{" "}
+                        {formatCompactNumber(variante.clics)} clics ·{" "}
+                        {formatCurrency(variante.gasto)}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {canPublish && (
+        <div
+          className={[
+            "flex flex-col gap-4 min-w-0 w-full",
+            "lg:w-[min(440px,44%)] lg:shrink-0",
+            "border-t lg:border-t-0 lg:border-l border-neutral-800",
+            "pt-4 lg:pt-5 lg:pb-5 lg:px-5",
+            "bg-neutral-950/40",
+          ].join(" ")}
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+        >
+          <CampaignObjectiveSelector
+            value={objetivo}
+            onChange={setObjetivo}
+            disabled={isPublishing}
+          />
+          <div className="flex flex-col gap-2">
             <Input
               label="Presupuesto diario total (S/)"
               type="number"
@@ -361,33 +377,33 @@ function CampaignCard({ campana, onCampanaUpdated }: CampaignCardProps) {
                 </p>
               )}
             </div>
-            <Button
-              type="button"
-              fullWidth
-              onClick={handlePublish}
-              disabled={isPublishing || !hasValidPresupuesto}
-            >
-              {isPublishing ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Publicando...
-                </>
-              ) : (
-                "Publicar"
-              )}
-            </Button>
-            <p className="text-[11px] leading-relaxed text-neutral-600">
-              Esto creará una nueva campaña en Meta Ads (pausada), incluso si ya
-              publicaste esta antes
-            </p>
-            {publishError && (
-              <p className="text-xs leading-relaxed text-red-400" role="alert">
-                {publishError}
-              </p>
-            )}
           </div>
-        )}
-      </div>
+          <Button
+            type="button"
+            fullWidth
+            onClick={handlePublish}
+            disabled={isPublishing || !hasValidPresupuesto}
+          >
+            {isPublishing ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Publicando...
+              </>
+            ) : (
+              "Publicar"
+            )}
+          </Button>
+          <p className="text-[11px] leading-relaxed text-neutral-600">
+            Esto creará una nueva campaña en Meta Ads (pausada), incluso si ya
+            publicaste esta antes
+          </p>
+          {publishError && (
+            <p className="text-xs leading-relaxed text-red-400" role="alert">
+              {publishError}
+            </p>
+          )}
+        </div>
+      )}
 
       {showPublishToast && (
         <Toast
@@ -432,12 +448,12 @@ export default function MisCampanasPage() {
     <div className="min-h-screen flex flex-col">
       <AppHeader />
 
-      <main className="flex-1 max-w-4xl mx-auto w-full px-6 py-10">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-10">
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-brand-white mb-2">
             Mis campañas
           </h2>
-          <p className="text-sm text-neutral-500 max-w-lg">
+          <p className="text-sm text-neutral-500 max-w-2xl">
             Historial de campañas generadas con el motor de IA — desde la
             investigación hasta la publicación en Meta Ads.
           </p>
@@ -449,8 +465,8 @@ export default function MisCampanasPage() {
               <Loader2 className="w-4 h-4 animate-spin text-brand-yellow" />
               Cargando campañas...
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Array.from({ length: 6 }).map((_, index) => (
+            <div className="flex flex-col gap-4">
+              {Array.from({ length: 3 }).map((_, index) => (
                 <CampaignCardSkeleton key={index} />
               ))}
             </div>
@@ -482,21 +498,20 @@ export default function MisCampanasPage() {
         )}
 
         {!isLoading && !error && campanas.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="flex flex-col gap-4">
             {campanas.map((campana) => (
-              <div key={campana.id} className="min-w-0">
-                <CampaignCard
-                  campana={campana}
-                  onCampanaUpdated={handleCampanaUpdated}
-                />
-              </div>
+              <CampaignCard
+                key={campana.id}
+                campana={campana}
+                onCampanaUpdated={handleCampanaUpdated}
+              />
             ))}
           </div>
         )}
       </main>
 
       <footer className="border-t border-neutral-800 mt-auto">
-        <div className="max-w-4xl mx-auto px-6 py-4">
+        <div className="max-w-6xl mx-auto px-6 py-4">
           <p className="text-xs text-neutral-600">
             Lernymart Ads Engine — Conectado a n8n · PoC v1
           </p>
