@@ -551,17 +551,39 @@ function validateCampanas(data: unknown): Campana[] {
 
 export async function listarCampanas(): Promise<Campana[]> {
   const url = buildWebhookUrl("/listar-campanas");
-  debugLog("listarCampanas → request", { method: "GET" });
+  debugLog("listarCampanas → request", { method: "GET", url });
 
   const res = await fetch(url, {
     method: "GET",
   });
 
+  const rawText = await res.text();
+  debugLog("listarCampanas ← raw", {
+    status: res.status,
+    bodyPreview: rawText.slice(0, 300),
+  });
+
   if (!res.ok) {
-    throw new Error("No se pudieron cargar las campañas");
+    throw new Error(
+      `No se pudieron cargar las campañas (${res.status}). Verifica el webhook /listar-campanas en n8n.`
+    );
   }
 
-  const raw = await res.json();
+  if (!rawText.trim()) {
+    throw new Error(
+      "El webhook /listar-campanas respondió vacío. Activa el workflow en n8n y asegúrate de que use 'Respond to Webhook' con un JSON array."
+    );
+  }
+
+  let raw: unknown;
+  try {
+    raw = JSON.parse(rawText);
+  } catch {
+    throw new Error(
+      "El webhook /listar-campanas no devolvió JSON válido. Revisa la respuesta del nodo en n8n."
+    );
+  }
+
   debugLog("listarCampanas ← response", raw);
 
   return validateCampanas(raw);
