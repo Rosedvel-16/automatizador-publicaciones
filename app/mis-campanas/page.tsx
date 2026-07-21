@@ -491,7 +491,7 @@ export default function MisCampanasPage() {
               Completa el brief de un producto para generar tu primera campaña
               publicitaria con IA.
             </p>
-            <Link href="/">
+            <Link href="/brief">
               <Button type="button">Crear primera campaña</Button>
             </Link>
           </div>

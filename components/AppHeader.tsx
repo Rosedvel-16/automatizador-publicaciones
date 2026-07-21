@@ -11,6 +11,12 @@ interface AppHeaderProps {
 export function AppHeader({ rightContent }: AppHeaderProps) {
   const pathname = usePathname();
   const isCampaignsPage = pathname === "/mis-campanas";
+  const isNewCampaignFlow =
+    pathname === "/brief" ||
+    pathname === "/investigacion" ||
+    pathname === "/borrador" ||
+    pathname === "/anuncios" ||
+    pathname === "/";
 
   return (
     <header className="border-b border-neutral-800">
@@ -23,7 +29,7 @@ export function AppHeader({ rightContent }: AppHeaderProps) {
         <div className="flex items-center gap-3 shrink-0">
           <div className="w-2 h-2 bg-brand-yellow shrink-0" aria-hidden />
           <div>
-            <Link href="/" className="block group">
+            <Link href="/brief" className="block group">
               <h1 className="text-base font-bold tracking-tight text-brand-white whitespace-nowrap group-hover:text-brand-yellow transition-colors">
                 Lernymart Ads Engine
               </h1>
@@ -37,10 +43,10 @@ export function AppHeader({ rightContent }: AppHeaderProps) {
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end min-w-0">
           <nav aria-label="Principal" className="flex items-center gap-1 sm:gap-2">
             <Link
-              href="/"
+              href="/brief"
               className={[
                 "text-[10px] sm:text-xs font-semibold px-2 py-1 whitespace-nowrap transition-colors",
-                !isCampaignsPage
+                !isCampaignsPage && isNewCampaignFlow
                   ? "text-brand-yellow border border-brand-yellow/40"
                   : "text-neutral-500 hover:text-brand-white",
               ].join(" ")}
